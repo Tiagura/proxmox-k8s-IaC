@@ -90,7 +90,7 @@ The project provides several Terraform variables that allow you to customize the
 | `gateway_ip`          | Gateway IP                             | `string` | **Required**         |
 | `cloud_image_url`     | URL of Ubuntu cloud image              | `string` | Noble Cloud Img URL  |
 | `vm_autostart`        | Enable autostart                       | `bool`   | `false`              |
-| `timezone`            | Timezone of VMs                        | `string` | `Europe/Lisbon`      |
+| `timezone`            | Timezone of VMs                        | `string` | `Europe/London`      |
 | `load_balancers`      | List of load balancer VM definitions   | `list`   | `[]`                 |
 | `lb_ciuser`           | Cloud-init user for load balancers     | `string` | **Required**         |
 | `lb_cipassword`       | Cloud-init password for load balancers | `string` | **Required**         |
