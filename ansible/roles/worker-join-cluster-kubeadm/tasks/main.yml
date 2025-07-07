@@ -1,0 +1,18 @@
+---
+- name: Print kubeadm join command for worker nodes
+  ansible.builtin.debug:
+    msg: "{{ worker_join_command }}"
+
+- name: Check if node joined the cluster
+  ansible.builtin.command:
+    cmd: kubectl get nodes --no-headers | grep -q "{{ inventory_hostname }}"
+  register: node_joined
+  ignore_errors: true
+
+- name: Join node to the cluster
+  when: node_joined.rc != 0
+  ansible.builtin.command:
+    cmd: "{{ worker_join_command }}"
+  register: join_result
+  changed_when: join_result.rc == 0
+  failed_when: join_result.rc != 0

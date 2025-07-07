@@ -1,0 +1,42 @@
+---
+- name: Ensure crictl is installed and configured
+  become: true
+  block:
+
+    - name: Check if crictl exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/crictl
+      register: crictl_stat
+
+    - name: Download crictl binary
+      #when: not crictl_stat.stat.exists
+      ansible.builtin.get_url:
+        url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ crictl_version }}/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
+        dest: /tmp/crictl.tar.gz
+        mode: "0644"
+
+    - name: Extract crictl binary
+      when: not crictl_stat.stat.exists
+      ansible.builtin.unarchive:
+        src: /tmp/crictl.tar.gz
+        dest: /usr/local/bin/
+        remote_src: yes
+        mode: "0755"
+
+    - name: Ensure crictl config is present
+      ansible.builtin.copy:
+        dest: /etc/crictl.yaml
+        content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+          image-endpoint: unix:///run/containerd/containerd.sock
+          timeout: 10
+          debug: false
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Test crictl connectivity
+      ansible.builtin.command: crictl info
+      register: crictl_test
+      changed_when: false
+      become: true

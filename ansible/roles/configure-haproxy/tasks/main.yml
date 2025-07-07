@@ -1,0 +1,29 @@
+---
+- name: Add HAProxy K8s config snippet
+  set_fact:
+    haproxy_k8s_block: |
+      frontend kubernetes-frontend
+          bind *:{{ control_plane_endpoint_port | default('6443') }}
+          mode tcp
+          default_backend kubernetes-backend
+
+      backend kubernetes-backend
+          mode tcp
+          balance roundrobin
+        {% for host in groups['masters'] | default([]) %}
+          server {{ host }} {{ hostvars[host].ansible_host }}:{{ control_plane_endpoint_port | default('6443') }} check
+        {% endfor %}
+
+- name: Append HAProxy backend config block to existing haproxy.cfg
+  blockinfile:
+    path: /etc/haproxy/haproxy.cfg
+    block: "{{ haproxy_k8s_block }}"
+    marker: "# {mark} ANSIBLE MANAGED BACKEND CONFIG"
+  become: true
+
+- name: Restart HAProxy to apply new configuration
+  ansible.builtin.service:
+    name: haproxy
+    state: restarted
+    enabled: true
+  become: true

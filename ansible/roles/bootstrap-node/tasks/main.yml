@@ -1,0 +1,26 @@
+- name: Add Terraform-generated hosts to target nodes
+  become: true  # Needed for editing /etc/hosts
+  blockinfile:
+    path: /etc/cloud/templates/hosts.debian.tmpl  # Persistent across reboots
+    block: "{{ lookup('file', '../../../hosts') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Terraform Hosts"
+  blockinfile:
+    path: /etc/hosts # Temporary, will be overwritten by cloud-init
+    block: "{{ lookup('file', '../../../hosts') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Terraform Hosts"
+
+- name: Update and upgrade apt packages
+  include_tasks: update-packages.yml
+
+- name: Install required packages
+  include_tasks: install-packages.yml
+
+- name: Load kernel modules for Kubernetes
+  include_tasks: load-kernel-modules.yml
+
+- name: Set sysctl parameters for Kubernetes
+  include_tasks: set-sysctl.yml
+
+- name: Ensure swap is disabled
+  include_tasks: disable-swap.yml
+

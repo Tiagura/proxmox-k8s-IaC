@@ -1,0 +1,21 @@
+---
+- name: Ensure overlay module is loaded
+  ansible.builtin.modprobe:
+    name: overlay
+    state: present
+  become: true
+
+- name: Ensure br_netfilter module is loaded
+  ansible.builtin.modprobe:
+    name: br_netfilter
+    state: present
+  become: true
+
+- name: Ensure overlay and br_netfilter modules load on boot
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+    mode: '0644'
+  become: true

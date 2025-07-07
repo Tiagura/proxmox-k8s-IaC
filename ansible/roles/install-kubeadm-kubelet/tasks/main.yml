@@ -1,0 +1,112 @@
+---
+- name: Check if kubelet is installed
+  ansible.builtin.command: kubelet --version
+  register: kubelet_version
+  ignore_errors: true
+
+- name: Download and install kubelet from source
+  when: kubelet_version.rc != 0
+  block:
+    - name: Download kubelet binary
+      ansible.builtin.get_url:
+        url:  https://dl.k8s.io/release/v{{ k8s_release_version }}/bin/linux/amd64/kubelet
+        dest: /usr/local/bin/kubelet
+        mode: '0755'
+      become: true
+
+    - name: Download kubelet service file
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/kubernetes/release/v{{ k8s_service_release_version }}/cmd/krel/templates/latest/kubelet/kubelet.service"
+        dest: /tmp/kubelet.service
+        mode: '0644'
+
+    - name: Replace /usr/bin with /usr/local/bin dir in kubelet service file
+      ansible.builtin.replace:
+        path: /tmp/kubelet.service
+        regexp: '/usr/bin'
+        replace: '/usr/local/bin'
+      become: true
+      
+    - name: Copy kubelet service file to systemd directory
+      ansible.builtin.copy:
+        src: /tmp/kubelet.service
+        dest: /etc/systemd/system/kubelet.service
+        remote_src: true
+        mode: '0644'
+      become: true
+
+    - name: Create /etc/systemd/system/kubelet.service.d directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/kubelet.service.d
+        state: directory
+        mode: '0644'
+      become: true
+
+- name: Check if kubeadm is installed
+  ansible.builtin.command: kubeadm version
+  register: kubeadm_version_result
+  ignore_errors: true
+
+- name: Download and install kubeadm from source
+  # when: kubeadm_version_result.rc != 0
+  block:
+    - name: Download kubeadm binary
+      ansible.builtin.get_url:
+        url: https://dl.k8s.io/release/v{{ k8s_release_version }}/bin/linux/amd64/kubeadm
+        dest: /usr/local/bin/kubeadm
+        mode: '0755'
+      become: true
+
+    - name: Download kubeadm config file 10-kubeadm.conf
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/kubernetes/release/v{{ k8s_service_release_version }}/cmd/krel/templates/latest/kubeadm/10-kubeadm.conf"
+        dest: /tmp/10-kubeadm.conf
+        mode: '0644'
+
+    - name: Replace /usr/bin with /usr/local/bin dir in kubeadm config file
+      ansible.builtin.replace:
+        path: /tmp/10-kubeadm.conf
+        regexp: '/usr/bin'
+        replace: '/usr/local/bin'
+      become: true
+
+    - name: Copy kubeadm config file to systemd directory
+      ansible.builtin.copy:
+        src: /tmp/10-kubeadm.conf
+        dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+        remote_src: true
+        mode: '0644'
+      become: true
+
+    - name: Enable and start kubelet service
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
+        state: started
+      become: true
+
+- name: Check if kubelet is running and enabled and version
+  ansible.builtin.command: kubelet --version
+  register: kubelet_check
+  changed_when: false
+  failed_when: kubelet_check.rc != 0
+
+- name: Check if kubeadm is running and enabled and version
+  ansible.builtin.command: kubeadm version
+  register: kubeadm_check
+  changed_when: false
+  failed_when: kubeadm_check.rc != 0
+
+- name: Print kubelet version
+  ansible.builtin.debug:
+    msg: "Kubelet version: {{ kubelet_check.stdout }}"
+
+- name: Print kubeadm version
+  ansible.builtin.debug:
+    msg: "Kubeadm version: {{ kubeadm_check.stdout }}"
+
+- name: Set k8s_release_version fact
+  set_fact:
+    k8s_release_version: "{{ k8s_release_version }}"
+
+

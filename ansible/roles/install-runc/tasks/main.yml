@@ -1,0 +1,22 @@
+---
+- name: Check if runc is installed
+  ansible.builtin.command: runc --version
+  register: runc_check
+  ignore_errors: true
+
+- name: Install runc if not present
+  when: runc_check.rc != 0
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ runc_version }}/runc.amd64"
+    dest: /usr/local/sbin/runc
+    mode: '0755'
+
+- name: Show installed runc version
+  ansible.builtin.command: runc --version
+  register: runc_version_output
+  changed_when: false
+
+- name: Print runc version
+  ansible.builtin.debug:
+    var: runc_version_output.stdout

@@ -1,0 +1,76 @@
+---
+- name: Check if kubeadm is initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_initialized
+
+- name: Initialize kubeadm
+  when: not kubeadm_initialized.stat.exists
+  block:
+    - name: Create kubeadm configuration file
+      ansible.builtin.template:
+        src: kubeadm-config.yaml.j2
+        dest: "{{ ansible_env.HOME }}/kubeadm-config.yaml"
+      vars:
+        k8s_release_version: "{{ k8s_release_version }}"
+        control_plane_endpoint: "{{ control_plane_endpoint }}"
+        control_plane_endpoint_port: "{{ control_plane_endpoint_port }}"
+
+    - name: Initialize the Kubernetes cluster with kubeadm
+      ansible.builtin.command:
+        cmd: kubeadm init --config={{ ansible_env.HOME }}/kubeadm-config.yaml --upload-certs
+      register: kubeadm_init_result
+      changed_when: kubeadm_init_result.rc == 0
+      failed_when: kubeadm_init_result.rc != 0
+      become: true
+
+    - name: Check if kubeadm init was successful
+      ansible.builtin.fail:
+        msg: "Kubeadm initialization failed: {{ kubeadm_init_result.stderr }}"
+      when: kubeadm_init_result.rc != 0
+
+    - name: Generate token
+      when: kubeadm_init_result.rc == 0
+      ansible.builtin.command: kubeadm token create
+      register: kubeadm_token
+      changed_when: false
+      become: true
+
+    - name: Get discovery token ca-cert-hash
+      when: kubeadm_init_result.rc == 0
+      ansible.builtin.shell: |
+        openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
+        openssl rsa -pubin -outform DER 2>/dev/null | \
+        openssl dgst -sha256 -hex | sed 's/^.* //'
+      register: discovery_token_ca_cert_hash
+      changed_when: false
+      become: true
+
+    - name: Upload certs to get certificate key
+      when: kubeadm_init_result.rc == 0
+      ansible.builtin.shell: |
+        kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace
+      register: certificate_key
+      changed_when: false
+      become: true
+
+    - name: Build join command (worker)
+      set_fact:
+        kubeadm_join_command_worker: >-
+          kubeadm join {{ control_plane_endpoint }}:{{ control_plane_endpoint_port }}
+          --token {{ kubeadm_token.stdout }}
+          --discovery-token-ca-cert-hash sha256:{{ discovery_token_ca_cert_hash.stdout }}
+
+    - name: Build join command (control-plane)
+      set_fact:
+        kubeadm_join_command_control_plane: >-
+          {{ kubeadm_join_command_worker }}
+          --control-plane --certificate-key {{ certificate_key.stdout }}
+
+    - name: Output join command (control-plane)
+      debug:
+        msg: "{{ kubeadm_join_command_control_plane }}"
+
+    - name: Output join command (worker)
+      debug:
+        msg: "{{ kubeadm_join_command_worker }}"

@@ -1,0 +1,15 @@
+---
+- name: Set net.ipv4.ip_forward in /etc/sysctl.d/k8s.conf
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    sysctl_file: /etc/sysctl.d/k8s.conf
+    reload: yes
+  become: true
+
+- name: Verify net.ipv4.ip_forward is set
+  ansible.builtin.command: sysctl net.ipv4.ip_forward
+  register: sysctl_check
+  changed_when: false
+  failed_when: sysctl_check.rc != 0

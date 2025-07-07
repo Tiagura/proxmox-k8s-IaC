@@ -1,0 +1,3 @@
+%{ for vm in node_ips ~}
+${vm.ip}  ${vm.hostname}.${domain}  ${vm.hostname}
+%{ endfor ~}

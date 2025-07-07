@@ -1,0 +1,32 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.crash
+.terraform/
+terraform.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+.terraformrc
+terraform.rc
+
+# Terraform output files
+*.generated
+
+# Ansible files
+*.retry
+*.log
+*.tmp
+*.bak
+*.swp
+__pycache__/
+
+# Common Ansible inventory and host files
+hosts
+inventory.ini
+
+# Miscellaneous
+*.DS_Store
+*.log

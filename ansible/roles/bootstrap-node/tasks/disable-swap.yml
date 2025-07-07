@@ -1,0 +1,17 @@
+---
+- name: Disable swap immediately
+  ansible.builtin.command: swapoff -a
+  become: true
+  ignore_errors: true  # Useful for idempotency; swap might already be off
+
+- name: Remove active swap entries from /etc/fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^\s*[^#]\S*\s+\S+\s+swap\s+'
+    state: absent
+  become: true
+
+- name: Ensure swap is disabled permanently
+  ansible.builtin.command: sed -i '/\sswap\s/d' /etc/fstab
+  become: true
+  ignore_errors: true  # Useful for idempotency; swap might already be removed

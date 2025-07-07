@@ -1,0 +1,13 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  become: true
+
+- name: Install HAProxy and Keepalived packages
+  ansible.builtin.apt:
+    name:
+      - haproxy
+      - keepalived
+    state: present
+  become: true

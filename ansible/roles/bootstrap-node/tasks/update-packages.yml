@@ -1,0 +1,11 @@
+---
+- name: Update and upgrade apt packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+    autoclean: true
+    autoremove: true
+  register: apt_update_result
+  changed_when: apt_update_result.changed
+  failed_when: apt_update_result is failed
+  become: true

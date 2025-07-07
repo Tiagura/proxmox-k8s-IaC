@@ -1,0 +1,3 @@
+---
+control_plane_endpoint_port  : '{{ lookup("env", "control_plane_endpoint_port") or 6443" }}'
+pod_subnet                   : '{{ lookup("env", "pod_subnet") or 10.32.0.0/16 }}'

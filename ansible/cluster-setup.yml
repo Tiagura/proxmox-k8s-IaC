@@ -1,0 +1,204 @@
+---
+- hosts: all
+  name: Initial bootstrap of nodes
+  roles:
+    - bootstrap-node
+
+# Install and configure the required packages on all master and worker nodes
+- hosts:
+    - masters
+    - workers
+  name: K8s nodes additional bootstrap
+  roles:
+    - install-runc
+    - install-cni
+    - install-containerd
+    - configure-containerd
+    - install-crictl
+    - install-kubeadm-kubelet
+    - install-kubectl
+
+# Determine the proxies configuration
+# Install and configure the proxies on load balancer nodes according to the inventory.
+- hosts: loadbalancers
+  name: Determine Role and priority
+  tasks:
+    - name: Set Role and Keepalived priority
+      set_fact:
+        haproxy_role: >-
+          {% if groups['loadbalancers'] | length == 1 %}
+            single
+          {% elif inventory_hostname == groups['loadbalancers'][0] %}
+            master
+          {% else %}
+            slave
+          {% endif %}
+        keepalived_priority: >-
+          {% if groups['loadbalancers'] | length > 1 %}
+            {{ 150 - (10 * groups['loadbalancers'].index(inventory_hostname)) }}
+          {% else %}
+            0
+          {% endif %}
+
+    - name: Debug role and priority
+      debug:
+        msg: "This host is acting as: {{ haproxy_role }}"
+
+- hosts: loadbalancers
+  name: Install and Configure load balancers
+  serial: 1
+  tasks:
+    - name: Install HAProxy and Keepalived prerequisites
+      include_role:
+        name: install-loadbalancer-packages
+    
+    - name: Configure HAProxy
+      include_role:
+        name: configure-haproxy
+
+    - name: Configure Keepalived master role
+      include_role:
+        name: configure-keepalived-master
+      when: haproxy_role | trim == 'master'
+
+    - name: Configure Keepalived slave role
+      include_role:
+        name: configure-keepalived-slave
+      when: haproxy_role | trim == 'slave'
+
+# Find the first master node to be used for cluster initialization
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ensure there is at least one master node
+      fail:
+        msg: "No master nodes defined in inventory!"
+      when: groups['masters'] | length < 1
+
+    - name: Show the initial master node
+      debug:
+        msg: "The first master node for initialization is: {{ groups['masters'][0] }}"
+
+# Check VMs configuration to get control_plane_endpoint
+# 1. If control_plane_endpoint is alreeady passed trough the environment variable, use it.
+# 2. If there is at least 2 load balancers, use the passed vip_address as control_plane_endpoint.
+# 3. If there is only one load balancer, use its IP address as control_plane_endpoint.
+# 4. If there are no load balancers, use the first master node IP address as control_plane_endpoint.
+- hosts: localhost
+  gather_facts: false
+  vars:
+    control_plane_endpoint: "{{ lookup('env', 'control_plane_endpoint' | trim) | default('', true) }}"
+    vip_address: "{{ lookup('env', 'vip_address') | default('', true) }}"
+    pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
+  tasks:
+
+    - name: Resolve IPs for loadbalancers
+      set_fact:
+        loadbalancer_ips: >-
+          {% if groups['loadbalancers'] is defined and groups['loadbalancers'] | length > 0 %}
+            {{ groups['loadbalancers'] | map('extract', hostvars, 'ansible_host') | list }}
+          {% else %}
+            []
+          {% endif %}
+
+    - name: Resolve IPs for masters
+      set_fact:
+        master_ips: >-
+          {% if groups['masters'] is defined and groups['masters'] | length > 0 %}
+            {{ groups['loadbalancers'] | map('extract', hostvars, 'ansible_host') | list }}
+          {% else %}
+            []
+          {% endif %}
+
+    - name: Determine control_plane_endpoint
+      ansible.builtin.set_fact:
+        control_plane_endpoint_final: >-
+          {% if control_plane_endpoint != '' %}
+            {{ control_plane_endpoint }}
+          {% elif loadbalancer_ips | length > 1 and vip_address != '' %}
+            {{ vip_address }}
+          {% elif loadbalancer_ips | length == 1 %}
+            {{ loadbalancer_ips[0] }}
+          {% else %}
+            {{ master_ips[0] }}
+          {% endif %}
+
+    - name: Set control_plane_endpoint_port
+      #If control_plane_endpoint_port is not set, use default 6443
+      ansible.builtin.set_fact:
+        control_plane_endpoint_port_final: >-
+          {% if lookup('env', 'control_plane_endpoint_port' | trim) | default('', true) != '' %}
+            {{ lookup('env', 'control_plane_endpoint_port' | trim) }}
+          {% else %}
+            6443
+          {% endif %}
+
+    - name: Show selected control_plane_endpoint
+      ansible.builtin.debug:
+        msg: "Selected control_plane_endpoint: {{ control_plane_endpoint_final | trim }}:{{ control_plane_endpoint_port_final | trim }}"
+
+- hosts: masters
+  vars_files:
+    - roles/install-kubeadm-kubelet/defaults/main.yml
+  vars:
+    control_plane_endpoint: "{{ control_plane_endpoint_final | trim }}"
+    control_plane_endpoint_port: "{{ control_plane_endpoint_port_final | trim }}"
+    podSubnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
+  tasks:
+    - name: Run cluster initialization on the first master
+      include_role:
+        name: initialize-cluster-kubeadm
+      when: inventory_hostname == groups['masters'][0]
+
+- hosts: localhost
+  name: Copy kubeconfig from remote master to Ansible control machine
+  tasks:
+    - name: Ensure .kube directory exists on Ansible control machine
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+        mode: '0755'
+
+    - name: Fetch /etc/kubernetes/admin.conf to control machine
+      ansible.builtin.fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+        flat: true
+      delegate_to: "{{ groups['masters'][0] }}"
+      run_once: true
+      become: true
+
+    # Set permissions for the kubeconfig file ->  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    - name: Set permissions for kubeconfig file
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/.kube/config"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0644'
+
+- hosts: masters
+  name: Join remaining masters to the cluster
+  vars:
+    control_join_command: "{{ hostvars[groups['masters'][0]].kubeadm_join_command_control_plane }}"
+  tasks:
+    - name: Pass kubeadm join command to other masters
+      include_role:
+        name: master-join-cluster-kubeadm
+      when: inventory_hostname != groups['masters'][0] and control_join_command is defined
+  become: true
+
+- hosts: workers
+  name: Join worker nodes to the cluster
+  vars:
+    worker_join_command: "{{ hostvars[groups['masters'][0]].kubeadm_join_command_worker }}"
+  tasks:
+    - name: Pass kubeadm join command to worker nodes
+      include_role:
+        name: worker-join-cluster-kubeadm
+      when: worker_join_command is defined
+  become: true
+
+- hosts: localhost
+  name: Install Cilium
+  roles:
+    - install-cilium

@@ -1,0 +1,14 @@
+---
+- name: Configure Keepalived
+  ansible.builtin.template:
+    src: templates/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: '0644'
+  become: true
+
+- name: Enable and start Keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    enabled: true
+    state: started
+  become: true

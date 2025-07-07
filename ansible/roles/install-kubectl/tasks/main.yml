@@ -1,0 +1,15 @@
+---
+- name: Check if kubectl is installed
+  ansible.builtin.command: kubectl version --client
+  register: kubectl_result_version
+  ignore_errors: true
+
+- name: Download and install kubectl from source
+  when: kubectl_result_version.rc != 0
+  block:
+    - name: Download kubectl binary
+      ansible.builtin.get_url:
+        url: https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+      become: true
