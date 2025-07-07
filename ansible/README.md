@@ -42,8 +42,6 @@ This playbook installs and configures Kubernetes components and provides other n
 - **Notes:**
    If control_plane_endpoint is not provided, Ansible will default to using the IP of the master node.
 
----
-
 #### Standard HA Cluster
 - **Topology:**
   - 3+ Master Nodes
@@ -57,8 +55,6 @@ This playbook installs and configures Kubernetes components and provides other n
 
 - **Notes:**
   If `control_plane_endpoint` is not provided, Ansible will default to using the IP of the load balancer node.
-
----
 
 #### Highly Available Cluster with Keepalived
 - **Topology:**
@@ -78,8 +74,6 @@ This playbook installs and configures Kubernetes components and provides other n
 
 - **Notes:**
   If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
-
----
 
 ## Extra Configuration Variables
 
