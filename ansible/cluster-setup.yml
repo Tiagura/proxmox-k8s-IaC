@@ -105,7 +105,7 @@
       set_fact:
         master_ips: >-
           {% if groups['masters'] is defined and groups['masters'] | length > 0 %}
-            {{ groups['loadbalancers'] | map('extract', hostvars, 'ansible_host') | list }}
+            {{ groups['masters'] | map('extract', hostvars, 'ansible_host') | list }}
           {% else %}
             []
           {% endif %}
@@ -123,27 +123,15 @@
             {{ master_ips[0] }}
           {% endif %}
 
-    - name: Set control_plane_endpoint_port
-      #If control_plane_endpoint_port is not set, use default 6443
-      ansible.builtin.set_fact:
-        control_plane_endpoint_port_final: >-
-          {% if lookup('env', 'control_plane_endpoint_port' | trim) | default('', true) != '' %}
-            {{ lookup('env', 'control_plane_endpoint_port' | trim) }}
-          {% else %}
-            6443
-          {% endif %}
-
     - name: Show selected control_plane_endpoint
       ansible.builtin.debug:
-        msg: "Selected control_plane_endpoint: {{ control_plane_endpoint_final | trim }}:{{ control_plane_endpoint_port_final | trim }}"
+        msg: "Selected control_plane_endpoint: {{ control_plane_endpoint_final | trim }}:{{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}"
 
 - hosts: masters
   vars_files:
     - roles/install-kubeadm-kubelet/defaults/main.yml
   vars:
     control_plane_endpoint: "{{ control_plane_endpoint_final | trim }}"
-    control_plane_endpoint_port: "{{ control_plane_endpoint_port_final | trim }}"
-    podSubnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
   tasks:
     - name: Run cluster initialization on the first master
       include_role:

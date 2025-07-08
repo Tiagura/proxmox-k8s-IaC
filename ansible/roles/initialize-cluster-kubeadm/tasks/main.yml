@@ -13,8 +13,7 @@
         dest: "{{ ansible_env.HOME }}/kubeadm-config.yaml"
       vars:
         k8s_release_version: "{{ k8s_release_version }}"
-        control_plane_endpoint: "{{ control_plane_endpoint }}"
-        control_plane_endpoint_port: "{{ control_plane_endpoint_port }}"
+        control_plane_endpoint: "{{ control_plane_endpoint_final | default(control_plane_endpoint) }}"
 
     - name: Initialize the Kubernetes cluster with kubeadm
       ansible.builtin.command:
