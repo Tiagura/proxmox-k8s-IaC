@@ -198,3 +198,9 @@
   name: Install Cilium
   roles:
     - install-cilium
+
+- hosts: localhost
+  name: Install Gateway API and Cilium
+  roles:
+    - install-gateway-api
+    - install-cilium
