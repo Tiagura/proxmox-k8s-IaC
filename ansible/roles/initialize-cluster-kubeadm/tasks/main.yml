@@ -17,7 +17,7 @@
 
     - name: Initialize the Kubernetes cluster with kubeadm
       ansible.builtin.command:
-        cmd: kubeadm init --config={{ ansible_env.HOME }}/kubeadm-config.yaml --upload-certs
+        cmd: kubeadm init --skip-phases=addon/kube-proxy --config={{ ansible_env.HOME }}/kubeadm-config.yaml --upload-certs
       register: kubeadm_init_result
       changed_when: kubeadm_init_result.rc == 0
       failed_when: kubeadm_init_result.rc != 0

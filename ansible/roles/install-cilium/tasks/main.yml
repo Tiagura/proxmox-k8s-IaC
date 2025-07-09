@@ -19,7 +19,7 @@
   when: cilium_status.rc != 0
   block:
     - name: Install Cilium using Cilium CLI
-      ansible.builtin.command: cilium install --version {{ cilium_version }} --set ipam.operator.clusterPoolIPv4PodCIDRList={{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}
+      ansible.builtin.command: cilium install --version {{ cilium_version }} --set ipam.operator.clusterPoolIPv4PodCIDRList={{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }} --set ipam.mode=kubernetes --set kubeProxyReplacement=true --set gatewayAPI.enabled=true --set k8sServiceHost={{ control_plane_endpoint_final | default(control_plane_endpoint) }} --set k8sServicePort={{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}
       register: cilium_install
       changed_when: cilium_install.rc != 0
 
