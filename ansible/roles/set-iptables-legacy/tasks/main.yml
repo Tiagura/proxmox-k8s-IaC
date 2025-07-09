@@ -1,0 +1,34 @@
+---
+- name: Check if iptables-legacy exists
+  stat:
+    path: /usr/sbin/iptables-legacy
+  register: iptables_legacy_bin
+
+- name: Get current iptables alternative
+  command: update-alternatives --query iptables
+  register: iptables_current
+  changed_when: false
+  when: iptables_legacy_bin.stat.exists
+
+- name: Switch iptables to legacy if not already
+  command: update-alternatives --set iptables /usr/sbin/iptables-legacy
+  when:
+    - iptables_legacy_bin.stat.exists
+    - "'Value: /usr/sbin/iptables-legacy' not in iptables_current.stdout"
+
+- name: Check if ip6tables-legacy exists
+  stat:
+    path: /usr/sbin/ip6tables-legacy
+  register: ip6tables_legacy_bin
+
+- name: Get current ip6tables alternative
+  command: update-alternatives --query ip6tables
+  register: ip6tables_current
+  changed_when: false
+  when: ip6tables_legacy_bin.stat.exists
+
+- name: Switch ip6tables to legacy if not already
+  command: update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+  when:
+    - ip6tables_legacy_bin.stat.exists
+    - "'Value: /usr/sbin/ip6tables-legacy' not in ip6tables_current.stdout"

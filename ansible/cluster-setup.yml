@@ -10,6 +10,7 @@
     - workers
   name: K8s nodes additional bootstrap
   roles:
+    - set-iptables-legacy
     - install-runc
     - install-cni
     - install-containerd
