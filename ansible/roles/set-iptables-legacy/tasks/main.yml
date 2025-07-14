@@ -1,34 +1,56 @@
 ---
 - name: Check if iptables-legacy exists
+  become: true
   stat:
     path: /usr/sbin/iptables-legacy
   register: iptables_legacy_bin
 
 - name: Get current iptables alternative
+  become: true
   command: update-alternatives --query iptables
   register: iptables_current
   changed_when: false
   when: iptables_legacy_bin.stat.exists
 
 - name: Switch iptables to legacy if not already
+  become: true
   command: update-alternatives --set iptables /usr/sbin/iptables-legacy
   when:
     - iptables_legacy_bin.stat.exists
     - "'Value: /usr/sbin/iptables-legacy' not in iptables_current.stdout"
 
 - name: Check if ip6tables-legacy exists
+  become: true
   stat:
     path: /usr/sbin/ip6tables-legacy
   register: ip6tables_legacy_bin
 
 - name: Get current ip6tables alternative
+  become: true
   command: update-alternatives --query ip6tables
   register: ip6tables_current
   changed_when: false
   when: ip6tables_legacy_bin.stat.exists
 
 - name: Switch ip6tables to legacy if not already
+  become: true
   command: update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
   when:
     - ip6tables_legacy_bin.stat.exists
     - "'Value: /usr/sbin/ip6tables-legacy' not in ip6tables_current.stdout"
+
+- name: Load xt_socket kernel module
+  become: true
+  block:
+    - name: Load xt_socket module 
+      ansible.builtin.modprobe:
+        name: xt_socket
+        state: present
+
+    - name: Ensure xt_socket module is loaded on boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/xt_socket.conf
+        content: "xt_socket\n"
+        owner: root
+        group: root
+        mode: '0644'
