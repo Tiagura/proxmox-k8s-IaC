@@ -32,3 +32,19 @@
   when:
     - ip6tables_legacy_bin.stat.exists
     - "'Value: /usr/sbin/ip6tables-legacy' not in ip6tables_current.stdout"
+
+- name: Load xt_socket kernel module
+  become: true
+  block:
+    - name: Load xt_socket module 
+      ansible.builtin.modprobe:
+        name: xt_socket
+        state: present
+
+    - name: Ensure xt_socket module is loaded on boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/xt_socket.conf
+        content: "xt_socket\n"
+        owner: root
+        group: root
+        mode: '0644'
