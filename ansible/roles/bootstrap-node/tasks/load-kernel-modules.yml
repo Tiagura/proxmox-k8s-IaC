@@ -1,21 +1,29 @@
----
-- name: Ensure overlay module is loaded
+- name: Ensure all necessary modules are loaded
   ansible.builtin.modprobe:
-    name: overlay
+    name: "{{ item }}"
     state: present
+  loop:
+    - overlay
+    - br_netfilter
+    - xt_socket
+    - ip_tables
+    - iptable_nat
+    - iptable_mangle
+    - iptable_raw
+    - iptable_filter
   become: true
 
-- name: Ensure br_netfilter module is loaded
-  ansible.builtin.modprobe:
-    name: br_netfilter
-    state: present
-  become: true
-
-- name: Ensure overlay and br_netfilter modules load on boot
+- name: Ensure all modules load on boot
   ansible.builtin.copy:
     dest: /etc/modules-load.d/k8s.conf
     content: |
       overlay
       br_netfilter
+      xt_socket
+      ip_tables
+      iptable_nat
+      iptable_mangle
+      iptable_raw
+      iptable_filter
     mode: '0644'
   become: true

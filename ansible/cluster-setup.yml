@@ -10,7 +10,6 @@
     - workers
   name: K8s nodes additional bootstrap
   roles:
-    - set-iptables-legacy
     - install-runc
     - install-cni
     - install-containerd
@@ -52,7 +51,7 @@
     - name: Install HAProxy and Keepalived prerequisites
       include_role:
         name: install-loadbalancer-packages
-    
+
     - name: Configure HAProxy
       include_role:
         name: configure-haproxy
@@ -191,4 +190,3 @@
   name: Install Gateway API and Cilium
   roles:
     - install-gateway-api
-    - install-cilium
