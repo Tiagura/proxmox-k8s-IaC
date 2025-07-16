@@ -1,3 +1,0 @@
----
-cilium_cli_version: '{{ lookup("env", "cilium_cli_version") or "0.18.5" }}'
-cilium_version: '{{ lookup("env", "cilium_version") or "1.17.5" }}'
