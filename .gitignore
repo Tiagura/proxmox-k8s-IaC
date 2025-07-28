@@ -4,6 +4,7 @@
 .crash
 .terraform/
 terraform.tfvars
+terraform.tfvars.old
 override.tf
 override.tf.json
 *_override.tf

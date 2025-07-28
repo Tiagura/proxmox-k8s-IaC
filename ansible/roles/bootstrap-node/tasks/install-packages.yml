@@ -7,7 +7,8 @@
       - gpg
       - wget
       - git
-      
+      - nfs-common
+
 - name: Check if packages are installed (Errors will be ignored.)
   ansible.builtin.shell: dpkg-query -s {{ item }} | grep 'install ok installed'
   register: dpkg_check_item
