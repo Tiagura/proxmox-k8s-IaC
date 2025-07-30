@@ -24,5 +24,6 @@
   ansible.builtin.apt:
     name: "{{ item }}"
     state: present
+  become: true
   when: "item not in dpkg_check or (dpkg_check[item].rc != 0)"
   loop: "{{ packages }}"
