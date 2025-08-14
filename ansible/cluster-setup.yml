@@ -127,6 +127,14 @@
       ansible.builtin.debug:
         msg: "Selected control_plane_endpoint: {{ control_plane_endpoint_final | trim }}:{{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}"
 
+- hosts: all
+  tasks:
+    - name: Reboot all devices
+      ansible.builtin.reboot: 
+        msg: "Rebooting all devices"
+        reboot_timeout: 600
+      become: true
+
 - hosts: masters
   vars_files:
     - roles/install-kubeadm-kubelet/defaults/main.yml
