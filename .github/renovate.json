@@ -1,8 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-
-  "enabledManagers": ["terraform", "regex"],
+  "enabledManagers": ["regex", "terraform"],
 
   "terraform": {
     "fileMatch": ["^terraform/.*\\.tf$"]
@@ -10,13 +9,13 @@
 
   "regexManagers": [
     {
-      "description": "Manage versions in ansible roles defaults (only mapped deps will update)",
+      "description": "Manage versions in Ansible role defaults",
       "fileMatch": ["^ansible/roles/.*/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>[a-zA-Z0-9_]+)_version:.*\\\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\\""
+        "(?<depName>[a-zA-Z0-9_]+)_version:\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
       ],
       "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "{{#switch depName}}{{#case 'cilium'}}cilium/cilium{{/case}}{{#case 'cilium_cli'}}cilium/cilium-cli{{/case}}{{#case 'cni'}}containernetworking/plugins{{/case}}{{#case 'containerd'}}containerd/containerd{{/case}}{{#case 'crictl'}}kubernetes-sigs/cri-tools{{/case}}{{#case 'k8s_release'}}kubernetes/kubernetes{{/case}}{{#case 'k8s_service_release'}}kubernetes/release{{/case}}{{#case 'kubectl'}}kubernetes/kubectl{{/case}}{{#case 'runc'}}opencontainers/runc{{/case}}{{/switch}}"
+      "packageNameTemplate": "{{depName}}"
     }
   ],
 
@@ -26,103 +25,64 @@
       "packageName": "kubernetes/kubernetes",
       "versioning": "semver",
       "separateMinorPatch": true,
-      "prBodyNotes": [
-        "`k8s_release` (kube-apiserver) is the source of truth for cluster version."
-      ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "prBodyNotes": ["`k8s_release` (kube-apiserver) is the source of truth for cluster version."],
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["k8s_service_release"],
       "packageName": "kubernetes/release",
       "versioning": "semver",
       "separateMinorPatch": true,
-      "prBodyNotes": [
-        "kubeadm/kubelet service files must match the same **minor** as kube-apiserver."
-      ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "prBodyNotes": ["kubeadm/kubelet service files must match the same **minor** as kube-apiserver."],
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["kubectl"],
       "packageName": "kubernetes/kubectl",
       "versioning": "semver",
       "separateMinorPatch": true,
-      "prBodyNotes": [
-        "`kubectl` must be within **±1 minor** of kube-apiserver (k8s_release)."
-      ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "prBodyNotes": ["`kubectl` must be within **±1 minor** of kube-apiserver (k8s_release)."],
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
-      "matchPackageNames": ["crictl"],
-      "packageName": "kubernetes-sigs/cri-tools",
+      "matchPackageNames": ["cilium", "cilium_cli"],
+      "packageName": null,
       "versioning": "semver",
-      "separateMinorPatch": true,
-      "prBodyNotes": [
-        "`crictl` should track the CRI API version supported by kubelet/Kubernetes."
-      ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "prBodyNotes": ["Cilium components must track matching Cilium release versions."],
+      "datasource": "github-releases"
     },
     {
       "matchPackageNames": ["containerd"],
       "packageName": "containerd/containerd",
       "versioning": "semver",
-      "prBodyNotes": [
-        "Ensure containerd release is compatible with targeted Kubernetes minor version."
-      ]
+      "prBodyNotes": ["Ensure containerd release is compatible with targeted Kubernetes minor version."]
     },
     {
-      "matchPackageNames": ["cni"],
-      "packageName": "containernetworking/plugins",
+      "matchPackageNames": ["crictl"],
+      "packageName": "kubernetes-sigs/cri-tools",
       "versioning": "semver",
-      "prBodyNotes": [
-        "Ensure CNI plugins are compatible with Kubernetes {{k8s_release.minor}}."
-      ]
-    },
-    {
-      "matchPackageNames": ["gateway_api"],
-      "packageName": "kubernetes-sigs/gateway-api",
-      "versioning": "semver",
-      "prBodyNotes": [
-        "Gateway API evolves independently — verify CRDs match target Kubernetes minor."
-      ]
+      "prBodyNotes": ["`crictl` should track the CRI API version supported by kubelet/Kubernetes."]
     },
     {
       "matchPackageNames": ["runc"],
       "packageName": "opencontainers/runc",
       "versioning": "semver",
-      "prBodyNotes": [
-        "Ensure runc release is compatible with containerd used by cluster."
-      ]
+      "prBodyNotes": ["Ensure runc release is compatible with containerd used by cluster."]
     },
     {
-      "matchPackageNames": ["cilium", "cilium_cli"],
+      "matchPackageNames": ["cni"],
+      "packageName": "containernetworking/plugins",
       "versioning": "semver",
-      "prBodyNotes": [
-        "Cilium components must track matching Cilium release versions."
-      ]
+      "prBodyNotes": ["Ensure CNI plugins are compatible with Kubernetes {{k8s_release.minor}}."]
+    },
+    {
+      "matchPackageNames": ["gateway_api"],
+      "packageName": "kubernetes-sigs/gateway-api",
+      "versioning": "semver",
+      "prBodyNotes": ["Gateway API evolves independently — verify CRDs match target Kubernetes minor."]
     }
   ]
 }
