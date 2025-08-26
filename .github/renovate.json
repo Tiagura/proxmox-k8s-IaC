@@ -29,13 +29,8 @@
       "prBodyNotes": [
         "`k8s_release` (kube-apiserver) is the source of truth for cluster version."
       ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["k8s_service_release"],
@@ -45,13 +40,8 @@
       "prBodyNotes": [
         "kubeadm/kubelet service files must match the same **minor** as kube-apiserver."
       ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["kubectl"],
@@ -61,13 +51,8 @@
       "prBodyNotes": [
         "`kubectl` must be within **±1 minor** of kube-apiserver (k8s_release)."
       ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["crictl"],
@@ -77,13 +62,8 @@
       "prBodyNotes": [
         "`crictl` should track the CRI API version supported by kubelet/Kubernetes."
       ],
-      "patch": {
-        "automerge": true,
-        "automergeType": "pr"
-      },
-      "minor": {
-        "automerge": false
-      }
+      "patch": { "automerge": true, "automergeType": "pr" },
+      "minor": { "automerge": false }
     },
     {
       "matchPackageNames": ["containerd"],
@@ -115,6 +95,14 @@
       "versioning": "semver",
       "prBodyNotes": [
         "Ensure runc release is compatible with containerd used by cluster."
+      ]
+    },
+    {
+      "matchPackageNames": ["cilium", "cilium_cli"],
+      "packageName": "cilium/cilium",
+      "versioning": "semver",
+      "prBodyNotes": [
+        "Cilium components must track matching Cilium release versions."
       ]
     }
   ]
