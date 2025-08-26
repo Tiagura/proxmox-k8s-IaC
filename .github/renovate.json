@@ -16,7 +16,7 @@
         "(?<depName>[a-zA-Z0-9_]+)_version:.*\\\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\\""
       ],
       "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "{{depName}}"
+      "packageNameTemplate": "{{#switch depName}}{{#case 'cilium'}}cilium/cilium{{/case}}{{#case 'cilium_cli'}}cilium/cilium-cli{{/case}}{{#case 'cni'}}containernetworking/plugins{{/case}}{{#case 'containerd'}}containerd/containerd{{/case}}{{#case 'crictl'}}kubernetes-sigs/cri-tools{{/case}}{{#case 'k8s_release'}}kubernetes/kubernetes{{/case}}{{#case 'k8s_service_release'}}kubernetes/release{{/case}}{{#case 'kubectl'}}kubernetes/kubectl{{/case}}{{#case 'runc'}}opencontainers/runc{{/case}}{{/switch}}"
     }
   ],
 
@@ -29,8 +29,13 @@
       "prBodyNotes": [
         "`k8s_release` (kube-apiserver) is the source of truth for cluster version."
       ],
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false }
+      "patch": {
+        "automerge": true,
+        "automergeType": "pr"
+      },
+      "minor": {
+        "automerge": false
+      }
     },
     {
       "matchPackageNames": ["k8s_service_release"],
@@ -40,8 +45,13 @@
       "prBodyNotes": [
         "kubeadm/kubelet service files must match the same **minor** as kube-apiserver."
       ],
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false }
+      "patch": {
+        "automerge": true,
+        "automergeType": "pr"
+      },
+      "minor": {
+        "automerge": false
+      }
     },
     {
       "matchPackageNames": ["kubectl"],
@@ -51,8 +61,13 @@
       "prBodyNotes": [
         "`kubectl` must be within **±1 minor** of kube-apiserver (k8s_release)."
       ],
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false }
+      "patch": {
+        "automerge": true,
+        "automergeType": "pr"
+      },
+      "minor": {
+        "automerge": false
+      }
     },
     {
       "matchPackageNames": ["crictl"],
@@ -62,8 +77,13 @@
       "prBodyNotes": [
         "`crictl` should track the CRI API version supported by kubelet/Kubernetes."
       ],
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false }
+      "patch": {
+        "automerge": true,
+        "automergeType": "pr"
+      },
+      "minor": {
+        "automerge": false
+      }
     },
     {
       "matchPackageNames": ["containerd"],
@@ -99,7 +119,6 @@
     },
     {
       "matchPackageNames": ["cilium", "cilium_cli"],
-      "packageName": "cilium/cilium",
       "versioning": "semver",
       "prBodyNotes": [
         "Cilium components must track matching Cilium release versions."
