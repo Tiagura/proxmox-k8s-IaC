@@ -16,7 +16,6 @@
       ],
       "datasourceTemplate": "github-releases",
       "packageNameTemplate": "{{depName}}"
-      "packageNameTemplate": "{{#switch depName}}{{#case 'cilium'}}cilium/cilium{{/case}}{{#case 'cilium_cli'}}cilium/cilium-cli{{/case}}{{/switch}}"
     }
   ],
 
@@ -85,14 +84,14 @@
     "prBodyNotes": ["Cilium must track matching Cilium release versions."],
     "patch": { "automerge": true, "automergeType": "pr" },
     "minor": { "automerge": false }
-  },
-  {
-    "matchPackageNames": ["cilium_cli"],
-    "packageName": "cilium/cilium-cli",
-    "versioning": "semver",
-    "prBodyNotes": ["Cilium CLI must track matching Cilium release versions."],
-    "patch": { "automerge": true, "automergeType": "pr" },
-    "minor": { "automerge": false }
-  }
+    },
+    {
+        "matchPackageNames": ["cilium_cli"],
+        "packageName": "cilium/cilium-cli",
+        "versioning": "semver",
+        "prBodyNotes": ["Cilium CLI must track matching Cilium release versions."],
+        "patch": { "automerge": true, "automergeType": "pr" },
+        "minor": { "automerge": false }
+    }
   ]
 }
