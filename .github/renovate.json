@@ -48,13 +48,6 @@
       "minor": { "automerge": false }
     },
     {
-      "matchPackageNames": ["cilium", "cilium_cli"],
-      "packageName": null,
-      "versioning": "semver",
-      "prBodyNotes": ["Cilium components must track matching Cilium release versions."],
-      "datasource": "github-releases"
-    },
-    {
       "matchPackageNames": ["containerd"],
       "packageName": "containerd/containerd",
       "versioning": "semver",
