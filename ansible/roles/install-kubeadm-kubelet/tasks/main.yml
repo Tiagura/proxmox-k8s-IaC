@@ -108,5 +108,3 @@
 - name: Set k8s_release_version fact
   set_fact:
     k8s_release_version: "{{ k8s_release_version }}"
-
-

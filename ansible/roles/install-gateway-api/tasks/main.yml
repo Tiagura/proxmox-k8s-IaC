@@ -1,0 +1,18 @@
+---
+- name: Install Gateway API Default
+  command: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v{{ gateway_api_version }}/standard-install.yaml
+  register: gateway_api_install
+  changed_when: "'configured' not in gateway_api_install.stdout"
+
+- name: Install Gateway API Experimental
+  command: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v{{ gateway_api_version }}/experimental-install.yaml
+  register: gateway_api_experimental_install
+  changed_when: "'configured' not in gateway_api_experimental_install.stdout"
+
+- name: Wait for Gateway API CRDs to be registered
+  shell: |
+    kubectl get crd gateways.gateway.networking.k8s.io
+  register: gateway_crd_check
+  retries: 10
+  delay: 3
+  until: gateway_crd_check.rc == 0

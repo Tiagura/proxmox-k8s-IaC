@@ -193,3 +193,8 @@
         name: worker-join-cluster-kubeadm
       when: worker_join_command is defined
   become: true
+
+- hosts: localhost
+  name: Install Gateway API and Cilium
+  roles:
+    - install-gateway-api
