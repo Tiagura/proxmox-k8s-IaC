@@ -91,7 +91,7 @@ This playbook installs and configures Kubernetes components and provides other n
 
 | Variable             | Default Value  | Description                                                 |
 |----------------------|----------------|-------------------------------------------------------------|
-| `cni_version`        | `1.3.0`        | Version of CNI plugins used for container networking.       |
+| `cni_version`        | `1.7.1`        | Version of CNI plugins used for container networking.       |
 | `containerd_version` | `2.1.3`        | Version of containerd runtime.                              |
 | `crictl_version`     | `1.33.0`       | Version of CRI tools.                                       |
 | `runc_version`       | `1.3.0`        | Version of `runc` used as the container runtime shim.       |
@@ -100,9 +100,9 @@ This playbook installs and configures Kubernetes components and provides other n
 
 | Variable                      | Default Value  | Description                          |
 |-------------------------------|----------------|--------------------------------------|
-| `k8s_release_version`         | `1.33.2`       | Kubernetes version to be installed.  |
+| `k8s_release_version`         | `1.33.5`       | Kubernetes version to be installed.  |
 | `k8s_service_release_version` | `0.16.2`       | Version of Kubernetes services.      |
-| `kubectl_version`             | `1.33.2`       | Version of `kubectl` CLI tool.       |
+| `kubectl_version`             | `1.33.5`       | Version of `kubectl` CLI tool.       |
 
 ### Cilium CNI Plugin
 
