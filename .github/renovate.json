@@ -19,22 +19,6 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["cilium"],
-      "packageName": "cilium/cilium",
-      "versioning": "semver",
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false },
-      "prBodyNotes": ["Cilium must track matching Cilium release versions."]
-    },
-    {
-      "matchPackageNames": ["cilium_cli"],
-      "packageName": "cilium/cilium-cli",
-      "versioning": "semver",
-      "patch": { "automerge": true, "automergeType": "pr" },
-      "minor": { "automerge": false },
-      "prBodyNotes": ["Cilium CLI must track matching Cilium release versions."]
-    },
-    {
       "matchPackageNames": ["cni"],
       "packageName": "containernetworking/plugins",
       "versioning": "semver",

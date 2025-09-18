@@ -4,9 +4,6 @@
   gather_facts: false
   become: true
 
-  vars:
-    cilium_cli_version: '{{ lookup("env", "cilium_cli_version") or "0.18.5" }}'
-
   tasks:
     - name: Add Terraform-generated hosts to /etc/hosts
       blockinfile:
@@ -29,23 +26,3 @@
     - name: Install Kubectl if not present
       include_role:
         name: install-kubectl
-
-    - name: Check if Cilium CLI is already installed
-      ansible.builtin.stat:
-        path: /usr/local/bin/cilium
-      register: cilium_cli_installed
-
-    - name: Install Cilium CLI
-      when: not cilium_cli_installed.stat.exists
-      block:
-        - name: Download Cilium CLI
-          ansible.builtin.get_url:
-            url: "https://github.com/cilium/cilium-cli/releases/download/v{{ cilium_cli_version }}/cilium-linux-amd64.tar.gz"
-            dest: /tmp/cilium-linux-amd64.tar.gz
-            mode: '0644'
-
-        - name: Extract Cilium CLI
-          ansible.builtin.unarchive:
-            src: /tmp/cilium-linux-amd64.tar.gz
-            dest: /usr/local/bin/
-            remote_src: yes

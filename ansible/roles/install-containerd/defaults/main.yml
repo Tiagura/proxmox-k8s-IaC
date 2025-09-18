@@ -1,2 +1,2 @@
 ---
-containerd_version: '{{ lookup("env", "containerd_version") or "2.1.3" }}'
+containerd_version: '{{ lookup("env", "containerd_version") or "2.1.4" }}'

@@ -26,9 +26,8 @@ This project relies on a combination of tools and components to automate and man
 - **runc** – Low-level container runtime used by containerd for spawning containers.
 - **crictl** - CLI tool for interacting with container runtimes that implement the Kubernetes Container Runtime Interface (CRI)
 
-### Networking & CNI
-- **Cilium** – Recommended CNI (Container Network Interface) for advanced networking, security, and observability.
-- **cilium-cli** – CLI tool to interact with and manage Cilium deployments.
+### CNI Plugins
+- [**containernetworking/plugins**](https://github.com/containernetworking/plugins) - Enables cluster networking
 
 ### High Availability & Load Balancing
 - **HAProxy** – Acts as a Layer 4/7 load balancer to distribute API server traffic across control-plane nodes.
@@ -95,28 +94,15 @@ Follow these steps to use the project:
    - Set up HAProxy and Keepalived for high availability (if configured)
 
 ## Some Important Notes
-   - If the `pod_subnet` variable is not provided during the execution of the Ansible `playbook.yaml`, the default pod CIDR used will be `10.32.0.0/16`. Make sure that your chosen CNI plugin configuration is updated accordingly to avoid networking issues.
+   - **No container network interface (CNI)** is installed in the resulting cluster, pick your CNI of choice and install it.
+   - If the `pod_subnet` variable is not provided during the execution of the Ansible `playbook.yaml`, the default pod CIDR used will be `10.32.0.0/16`. Make sure that your chosen CNI configuration is updated accordingly to avoid networking issues.
    - This setup is designed to be **managed from the setup machine** where Terraform and Ansible are executed. If you prefer to manage the cluster from a different machine:
      1. Copy the contents of the generated `hosts` file entries into the management machine’s `/etc/hosts`.
      2. Install `kubectl` on the target machine.
-     3. Install `Cilium CLI` on the target machine.
-     4. Copy the Kubernetes admin config from the initial setup machine:
+     3. Copy the Kubernetes admin config from the initial setup machine:
         ```bash
         mkdir -p $HOME/.kube
         scp user@<setup-machine>:/etc/kubernetes/admin.conf $HOME/.kube/config
         chown $(id -u):$(id -g) $HOME/.kube/config
         ```
         Replace `<setup-machine>` with the IP or hostname of the initial setup machine and adjust the `user` accordingly.
-   - By default, Cilium is installed using a simple command:
-      ```bash
-      cilium install --version {cilium_version} --set ipam.operator.clusterPoolIPv4PodCIDRList={pod_subnet}
-      ```
-      These default values are:
-         `cilium_version: 1.17.5`
-         `pod_subnet: 10.32.0.0/16`
-      
-      This works for most basic setups. However, if you require a more advanced or customized configuration (e.g., enabling the Kubernetes Gateway API, changing IPAM backends, enabling encryption, etc.), you should first uninstall Cilium:
-      ```bash
-      cilium uninstall
-      ```
-      Then, reinstall Cilium with your desired settings

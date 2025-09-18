@@ -24,7 +24,6 @@ This playbook installs and configures Kubernetes components and provides other n
 - Initialize the Kubernetes control plane (using `kubeadm`).
 - Join worker nodes to the cluster.
 - Configure optional load balancers if present.
-- Install the CNI plugin (default is Cilium).
 
 ### Usage Examples by Topology
 
@@ -85,31 +84,24 @@ This playbook installs and configures Kubernetes components and provides other n
 |------------------------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `control_plane_endpoint`      | *auto-detected* | DNS/IP for Kubernetes control plane access. Defaults to the IP of master/load balancer/vip depending on topology. It is recommended to use a DNS record because it allows flexibility in changing the backend IP (e.g., when scaling or replacing load balancer/master nodes) without reconfiguring clients or the cluster.           |
 | `control_plane_endpoint_port` | `6443`          | Kubernetes API server port.                                                                                                      |
-| `pod_subnet`                  | `10.32.0.0/16`  | CIDR for Kubernetes pod network. Passed to Cilium.                                                                               |
+| `pod_subnet`                  | `10.32.0.0/16`  | CIDR for Kubernetes pod network.                                                                               |
 
 ### Runtime & Networking Components
 
 | Variable             | Default Value  | Description                                                 |
 |----------------------|----------------|-------------------------------------------------------------|
-| `cni_version`        | `1.7.1`        | Version of CNI plugins used for container networking.       |
-| `containerd_version` | `2.1.3`        | Version of containerd runtime.                              |
-| `crictl_version`     | `1.33.0`       | Version of CRI tools.                                       |
-| `runc_version`       | `1.3.0`        | Version of `runc` used as the container runtime shim.       |
+| `cni_version`        | `1.8.0`        | Version of CNI plugins used for container networking.       |
+| `containerd_version` | `2.1.4`        | Version of containerd runtime.                              |
+| `crictl_version`     | `1.34.0`       | Version of CRI tools.                                       |
+| `runc_version`       | `1.3.1`        | Version of `runc` used as the container runtime shim.       |
 
 ### Kubernetes Components
 
 | Variable                      | Default Value  | Description                          |
 |-------------------------------|----------------|--------------------------------------|
-| `k8s_release_version`         | `1.33.5`       | Kubernetes version to be installed.  |
+| `k8s_release_version`         | `1.34.1`       | Kubernetes version to be installed.  |
 | `k8s_service_release_version` | `0.16.2`       | Version of Kubernetes services.      |
-| `kubectl_version`             | `1.33.5`       | Version of `kubectl` CLI tool.       |
-
-### Cilium CNI Plugin
-
-| Variable             | Default Value  | Description                        |
-|----------------------|----------------|------------------------------------|
-| `cilium_version`     | `1.17.5`       | Version of Cilium to install.      |
-| `cilium_cli_version` | `0.18.5`       | Version of the Cilium CLI tool.    |
+| `kubectl_version`             | `1.34.1`       | Version of `kubectl` CLI tool.       |
 
 ### HA Load Balancer Parameters
 
