@@ -11,6 +11,7 @@
     - iptable_mangle
     - iptable_raw
     - iptable_filter
+    - dm_crypt
   become: true
 
 - name: Ensure all modules load on boot
