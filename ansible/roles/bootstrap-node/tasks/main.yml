@@ -21,6 +21,9 @@
 - name: Set sysctl parameters for Kubernetes
   include_tasks: set-sysctl.yml
 
+- name: Disable multipathd service if active
+  include_tasks: disable-multipathd.yml
+
 - name: Ensure swap is disabled
   include_tasks: disable-swap.yml
 
