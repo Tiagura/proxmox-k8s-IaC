@@ -1,3 +1,13 @@
+# Dynamically generate the terraform provider configuration for proxmox
+locals {
+  provider_config = templatefile("${path.module}/provider_proxmox.tftpl", {
+    pve_api_url  = var.pve_api_url
+    pve_username = var.pve_username
+    pve_password = var.pve_password
+    pve_nodes    = var.pve_nodes
+  })
+}
+
 # Merge global variables with local variables for VMs
 # Combine all VMs into one local variable for iteration
 locals {

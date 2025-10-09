@@ -10,20 +10,3 @@ terraform {
     }
   }
 }
-
-provider "proxmox" {
-  endpoint = var.pve_api_url
-
-  # Use either token or username/password authentication
-  # Token-based (recommended for automation)
-  # api_token = var.pve_api_token
-  # OR username/password (less secure)
-  username = var.pve_username
-  password = var.pve_password
-
-  insecure = true
-  
-  ssh {
-    agent = true
-  }
-}

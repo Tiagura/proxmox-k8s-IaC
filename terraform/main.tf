@@ -2,6 +2,11 @@ data "local_file" "ssh_public_key" {
   filename = var.ssh_public_key_path
 }
 
+resource "local_file" "proxmox_provider_file" {
+  filename = "${path.module}/proxmox_provider.tf"
+  content  = local.provider_config
+}
+
 resource "proxmox_virtual_environment_file" "meta_data_cloud_config" {
   for_each = { for vm in local.all_vms : vm.hostname => vm }
 
@@ -50,7 +55,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   disk {
     datastore_id = each.value.pve_node_vm_storage
-    file_id      = proxmox_virtual_environment_download_file.cloud_image["${each.value.pve_node}-${each.value.pve_node_vm_storage}"].id
+    file_id      = proxmox_virtual_environment_download_file.cloud_image["${each.value.pve_node}-${each.value.pve_node_datastore}"].id
     file_format  = "qcow2"
     interface    = "virtio0"
     iothread     = true

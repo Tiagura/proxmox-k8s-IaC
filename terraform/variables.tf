@@ -7,6 +7,11 @@ variable "ssh_public_key_path" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
+variable "pve_nodes" {
+  description = "Mapping of Proxmox node names to their IP addresses"
+  type = map(string)
+}
+
 # PVE Variables
 variable "pve_api_url" {
   description = "Proxmox VE API URL"

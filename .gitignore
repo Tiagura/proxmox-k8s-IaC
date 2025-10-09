@@ -16,6 +16,9 @@ terraform.rc
 # Terraform output files
 *.generated
 
+# Generated Proxmox provider configuration
+proxmox_provider.tf
+
 # Ansible files
 *.retry
 *.log

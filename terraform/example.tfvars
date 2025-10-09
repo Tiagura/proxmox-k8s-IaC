@@ -7,6 +7,14 @@ pve_password = "<password>"
 gateway_ip = "<gateway_ip>" # e.g., "10.0.0.1"
 domain = "home.arpa"        # Preferred domain for local networks
 
+# PVE Nodes
+pve_nodes = {
+  # <node_name> = "<node_ip>"
+  pve1 = "<IP1>"
+  pve2 = "<IP2>"
+  pve3 = "<IP3>"
+}
+
 # VM Configuration
 
 load_balancers = [

@@ -1,0 +1,17 @@
+provider "proxmox" {
+  endpoint = "${pve_api_url}"
+  username = "${pve_username}"
+  password = "${pve_password}"
+  insecure = true
+
+  ssh {
+    agent = true
+
+%{ for name, address in pve_nodes ~}
+    node {
+      name    = "${name}"
+      address = "${address}"
+    }
+%{ endfor ~}
+  }
+}

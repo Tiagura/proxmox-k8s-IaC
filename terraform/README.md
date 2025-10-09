@@ -65,12 +65,17 @@ Run the following commands:
 terraform init
 ```
 
-2. Generate the execution plan and review the output to ensure that the planned changes are correct
+2. Generate the proxmox provider config file and review the output file `proxmox_provider.tf` to ensure it is correct
+```bash
+terraform apply -target=local_file.proxmox_provider_file
+```
+
+4. Generate the execution plan and review the output to ensure that the planned changes are correct
 ```bash
 terraform plan -var-file="terraform.tfvars"
 ```
 
-3. Apply the changes.
+1. Apply the changes.
 ```bash
 terraform apply -var-file="terraform.tfvars"
 ```
@@ -85,6 +90,7 @@ The project provides several Terraform variables that allow you to customize the
 | `pve_api_url`         | Proxmox API URL                        | `string` | **Required**         |
 | `pve_username`        | Proxmox username                       | `string` | `root@pam`           |
 | `pve_password`        | Proxmox password                       | `string` | **Required**         |
+| `pve_nodes`           | Mapping of Proxmox node names to IPs   | `map`    | **Required**         |
 | `dns_servers`         | DNS servers for VMs                    | `list`   | `[1.1.1.1, 8.8.8.8]` |
 | `domain`              | Domain name for nodes                  | `string` | `home.arpa`          |
 | `gateway_ip`          | Gateway IP                             | `string` | **Required**         |
@@ -92,8 +98,8 @@ The project provides several Terraform variables that allow you to customize the
 | `vm_autostart`        | Enable autostart                       | `bool`   | `false`              |
 | `timezone`            | Timezone of VMs                        | `string` | `Europe/London`      |
 | `load_balancers`      | List of load balancer VM definitions   | `list`   | `[]`                 |
-| `lb_ciuser`           | Cloud-init user for load balancers     | `string` | **Required**         |
-| `lb_cipassword`       | Cloud-init password for load balancers | `string` | **Required**         |
+| `lb_ciuser`           | Cloud-init user for load balancers (can be empty/null if no load balancers are defined)     | `string` | **Required**         |
+| `lb_cipassword`       | Cloud-init password for load balancers (can be empty/null if no load balancers are defined) | `string` | **Required**         |
 | `lb_cores`            | CPU cores per load balancer            | `number` | `1`                  |
 | `lb_memory`           | RAM Memory (MB) per load balancer      | `number` | `512`                |
 | `lb_disk`             | Disk size (GB) per load balancer       | `number` | `5`                  |
@@ -111,6 +117,8 @@ The project provides several Terraform variables that allow you to customize the
 | `worker_disk`         | Disk size (GB) per worker              | `number` | `10`                 |
 
 In addition to the general configuration, you can define detailed configurations for each VM role (load balancers, masters, and workers) by specifying lists of VM definitions. These objects allow per-VM customization for hostname, IP, resources, and Proxmox settings.
+
+> The placement of each VM (i.e., which Proxmox node, cloud-init datastore, and VM disk storage it will use) is not automatically determined by defaults; it must be explicitly defined for each VM using the `pve_node`, `pve_node_datastore`, and `pve_node_vm_storage` fields.
 
 ### Load Balancer VM Object
 
@@ -166,9 +174,9 @@ Below is an example of how to define a list of Kubernetes master nodes with both
 
 ```hcl
 masters = [
-  { hostname = "k8s-master-1", ip = "<IP1>/<MASK>", pve_node = "proxmox", pve_node_datastore = "local", pve_node_vm_storage = "local-lvm", pve_network_bridge = "vmbr0", master_ciuser="diff_user",  master_cipassword="diff_pwd" },
-  { hostname = "k8s-master-2", ip = "<IP2>/<MASK>", pve_node = "proxmox", pve_node_datastore = "local", pve_node_vm_storage = "local-lvm", pve_network_bridge = "vmbr0", master_cores=4 },
-  { hostname = "k8s-master-3", ip = "<IP3>/<MASK>", pve_node = "proxmox", pve_node_datastore = "local", pve_node_vm_storage = "local-lvm", pve_network_bridge = "vmbr0" }
+  { hostname = "k8s-master-1", ip = "<IP1>/<MASK>", pve_node = "pv1", pve_node_datastore = "local1", pve_node_vm_storage = "local-lvm1", pve_network_bridge = "vmbr0", master_ciuser="diff_user",  master_cipassword="diff_pwd" },
+  { hostname = "k8s-master-2", ip = "<IP2>/<MASK>", pve_node = "pv2", pve_node_datastore = "local2", pve_node_vm_storage = "local-lvm2", pve_network_bridge = "vmbr0", master_cores=4 },
+  { hostname = "k8s-master-3", ip = "<IP3>/<MASK>", pve_node = "pv2", pve_node_datastore = "local2", pve_node_vm_storage = "local-lvm2", pve_network_bridge = "vmbr0" }
 ]
 
 master_ciuser     = "user"
@@ -179,13 +187,42 @@ master_disk       = 10
 ```
 
 By this definition:
-- VM 1 (`hostname = "k8s-master-1"`) will have a custom cloud-init user `diff_user` and password `diff_pwd`.
-- VM 2 (`hostname = "k8s-master-2"`) will override the default CPU cores and use `4` cores.
-- VM 3 (`hostname = "k8s-master-3"`) will use all default values defined previouslly (i.e. `master_ciuser`, `master_cipassword`, `master_cores`, `master_memory`, `master_disk`).
+- VM 1 (`hostname = "k8s-master-1"`) will have a custom cloud-init user `diff_user` and password `diff_pwd`. It will be created on Proxmox node `pv1`, use the cloud-init image on `local1`, and store its VM disk in `local-lvm1`.
+- VM 2 (`hostname = "k8s-master-2"`) will override the default CPU cores and use `4` cores. It will be created on Proxmox node `pv2`, use the cloud-init image on `local2`, and store its VM disk in `local-lvm2`.
+- VM 3 (`hostname = "k8s-master-3"`) will use all default values defined previouslly (i.e. `master_ciuser`, `master_cipassword`, `master_cores`, `master_memory`, `master_disk`). It will be created on Proxmox node `pv2`, use the cloud-init image on `local2`, and store its VM disk in `local-lvm2`.
 
 ## Output Files
 
-After successful deployment, Terraform will generate several useful output files to assist in configuring your Kubernetes cluster and managing VM access.
+After successful deployment, Terraform will generate several useful output files to assist in configuring your Kubernetes cluster, managing VM access and more.
+
+### Proxmox Provider Configuration File
+
+Before running `terraform apply` to provision VMs, you must first [generate the dynamic Proxmox provider file](#2-initialize-terraform-and-apply). This file contains the SSH mappings for all Proxmox nodes. Terraform uses this file to connect to the nodes during VM provisioning.
+
+```ini
+provider "proxmox" {
+  endpoint = "<proxmox_api_url>"
+  username = "<username>"
+  password = "<password>"
+  insecure = true
+
+  ssh {
+    agent = true
+
+    ### Blocks from the pve_nodes map
+    node {
+      name    = "pve1"
+      address = "<IP1>"
+    }
+
+    node {
+      name    = "pve2"
+      address = "<IP2>"
+    }
+    ### 
+  }
+}
+```
 
 ### Ansible Inventory File
 
