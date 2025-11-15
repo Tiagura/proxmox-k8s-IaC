@@ -16,15 +16,13 @@
     ]
   },
 
-  "customDatasources": [
-    {
-      "id": "kubelet-stable",
+  "customDatasources": {
+    "kubeletStable": {
       "lookupUrl": "https://dl.k8s.io/release/stable.txt",
-      "defaultRegistryUrlTemplate": "https://dl.k8s.io/release/stable.txt",
       "format": "text",
       "extractVersion": "^v(?<version>.*)$"
     }
-  ],
+  },
 
   "customManagers": [
     {
@@ -36,46 +34,43 @@
       "matchStrings": [
         "(?<depName>[a-zA-Z0-9_]+)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
       ],
-      "datasourceTemplate": "github-releases"
+      "datasourceTemplate": "github-releases",
+
+      "packageRules": [
+        {
+          "matchDepNames": ["cni"],
+          "packageNameTemplate": "containernetworking/plugins"
+        },
+        {
+          "matchDepNames": ["containerd"],
+          "packageNameTemplate": "containerd/containerd"
+        },
+        {
+          "matchDepNames": ["crictl"],
+          "packageNameTemplate": "kubernetes-sigs/cri-tools"
+        },
+        {
+          "matchDepNames": ["kubectl"],
+          "packageNameTemplate": "kubernetes/kubectl"
+        },
+        {
+          "matchDepNames": ["runc"],
+          "packageNameTemplate": "opencontainers/runc"
+        },
+        {
+          "matchDepNames": ["k8s_release"],
+          "packageNameTemplate": "kubernetes/kubernetes"
+        },
+        {
+          "matchDepNames": ["k8s_service_release"],
+          "datasourceTemplate": "custom",
+          "customDatasourceTemplate": "kubeletStable"
+        }
+      ]
     }
   ],
 
   "packageRules": [
-
-    /* map depNames from regex manager → GitHub repos */
-
-    {
-      "matchDepNames": ["cni"],
-      "packageName": "containernetworking/plugins"
-    },
-    {
-      "matchDepNames": ["containerd"],
-      "packageName": "containerd/containerd"
-    },
-    {
-      "matchDepNames": ["crictl"],
-      "packageName": "kubernetes-sigs/cri-tools"
-    },
-    {
-      "matchDepNames": ["kubectl"],
-      "packageName": "kubernetes/kubectl"
-    },
-    {
-      "matchDepNames": ["runc"],
-      "packageName": "opencontainers/runc"
-    },
-    {
-      "matchDepNames": ["k8s_release"],
-      "packageName": "kubernetes/kubernetes"
-    },
-
-    {
-      "matchDepNames": ["k8s_service_release"],
-      "datasource": "custom",
-      "customDatasource": "kubelet-stable",
-      "versioning": "semver"
-    },
-
     {
       "matchPackageNames": ["containernetworking/plugins"],
       "versioning": "semver",
