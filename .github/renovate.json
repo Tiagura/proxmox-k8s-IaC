@@ -1,17 +1,21 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
   "extends": [
     "config:recommended"
   ],
+
   "enabledManagers": [
     "custom.regex",
     "terraform"
   ],
+
   "terraform": {
     "managerFilePatterns": [
       "^terraform/.*\\.tf$"
     ]
   },
+
   "customManagers": [
     {
       "customType": "regex",
@@ -20,13 +24,47 @@
         "^ansible/roles/.*/defaults/main\\.ya?ml$"
       ],
       "matchStrings": [
-        "(?<depName>[a-zA-Z0-9_]+)_version:\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
+        "(?<depName>[a-zA-Z0-9_]+)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
       ],
-      "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "{{depName}}"
+      "datasourceTemplate": "github-releases"
     }
   ],
+
   "packageRules": [
+    {
+      "matchDepNames": ["cni"],
+      "packageName": "containernetworking/plugins"
+    },
+    {
+      "matchDepNames": ["containerd"],
+      "packageName": "containerd/containerd"
+    },
+    {
+      "matchDepNames": ["crictl"],
+      "packageName": "kubernetes-sigs/cri-tools"
+    },
+    {
+      "matchDepNames": ["kubectl"],
+      "packageName": "kubernetes/kubectl"
+    },
+    {
+      "matchDepNames": ["runc"],
+      "packageName": "opencontainers/runc"
+    },
+    {
+      "matchDepNames": ["k8s_release"],
+      "packageName": "kubernetes/kubernetes"
+    },
+    {
+      "matchDepNames": ["k8s_service_release"],
+      "datasource": "http",
+      "lookupName": "https://dl.k8s.io/release/stable.txt",
+      "versioning": "semver",
+      "extractVersion": "^v(?<version>.*)$"
+    },
+
+    /* Original patch/minor rules preserved */
+
     {
       "matchPackageNames": [
         "containernetworking/plugins"
