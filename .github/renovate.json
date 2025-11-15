@@ -16,6 +16,16 @@
     ]
   },
 
+  "customDatasources": [
+    {
+      "id": "kubelet-stable",
+      "lookupUrl": "https://dl.k8s.io/release/stable.txt",
+      "defaultRegistryUrlTemplate": "https://dl.k8s.io/release/stable.txt",
+      "format": "text",
+      "extractVersion": "^v(?<version>.*)$"
+    }
+  ],
+
   "customManagers": [
     {
       "customType": "regex",
@@ -57,13 +67,10 @@
     },
     {
       "matchDepNames": ["k8s_service_release"],
-      "datasource": "http",
-      "lookupName": "https://dl.k8s.io/release/stable.txt",
-      "versioning": "semver",
-      "extractVersion": "^v(?<version>.*)$"
+      "datasource": "custom",
+      "customDatasource": "kubelet-stable",
+      "versioning": "semver"
     },
-
-    /* Original patch/minor rules preserved */
 
     {
       "matchPackageNames": [
