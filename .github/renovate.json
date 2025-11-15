@@ -11,7 +11,7 @@
   {
     "customType": "regex",
     "description": "containerd_version",
-    "managerFilePatterns": [".*install-containerd/defaults/main\\.yml$"],
+    "managerFilePatterns": ["ansible/roles/install-containerd/defaults/main.yml"],
     "matchStrings": [
       "containerd_version:\\s*'\\{\\{\\s*lookup\\(\"env\", \"containerd_version\"\\)\\s*or\\s*\"(?<currentValue>[^\"]+)\"\\s*\\}\\}'"
     ],
