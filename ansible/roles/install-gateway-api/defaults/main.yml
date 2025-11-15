@@ -1,2 +1,2 @@
 ---
-gateway_api_version: '{{ lookup("env", "gateway_api_version") or "1.3.0" }}'
+gateway_api_version: '{{ lookup("env", "gateway_api_version") or "1.4.0" }}'
