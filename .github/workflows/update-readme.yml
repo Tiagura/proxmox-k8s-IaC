@@ -1,0 +1,33 @@
+name: Update README with latest versions
+
+on:
+  workflow_dispatch:       # allows manual triggering
+  push:
+    paths:
+      - 'ansible/roles/**/defaults/*.yml'  # triggers on changes to defaults
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (if any)
+        run: npm install
+
+      - name: Update README.md
+        run: node scripts/update-readme.js
+
+      - name: Commit and Push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ansible/README.md
+          git commit -m "Update README.md with latest versions" || echo "No changes to commit"
+          git push
