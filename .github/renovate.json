@@ -7,76 +7,76 @@
     "managerFilePatterns": ["^terraform/.*\\.tf$"]
   },
 
-  "customManagers": [
+    "customManagers": [
     {
-      "customType": "regex",
-      "description": "cni_version",
-      "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "cni_version",
+        "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>cni)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "containernetworking/plugins"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "containernetworking/plugins"
     },
     {
-      "customType": "regex",
-      "description": "containerd_version",
-      "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "containerd_version",
+        "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>containerd)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "containerd/containerd"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "containerd/containerd"
     },
     {
-      "customType": "regex",
-      "description": "crictl_version",
-      "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "crictl_version",
+        "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>crictl)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes-sigs/cri-tools"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "kubernetes-sigs/cri-tools"
     },
     {
-      "customType": "regex",
-      "description": "k8s_release_version",
-      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "k8s_release_version",
+        "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>k8s_release)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/kubernetes"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "kubernetes/kubernetes"
     },
     {
-      "customType": "regex",
-      "description": "k8s_service_release_version (tracks stable.txt)",
-      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "k8s_service_release_version (stable.txt)",
+        "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>k8s_service_release)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "http",
-      "depNameTemplate": "https://dl.k8s.io/release/stable.txt"
+        ],
+        "datasourceTemplate": "http",
+        "depNameTemplate": "https://dl.k8s.io/release/stable.txt"
     },
     {
-      "customType": "regex",
-      "description": "kubectl_version",
-      "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "kubectl_version",
+        "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>kubectl)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/kubectl"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "kubernetes/kubectl"
     },
     {
-      "customType": "regex",
-      "description": "runc_version",
-      "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.yml$"],
-      "matchStrings": [
+        "customType": "regex",
+        "description": "runc_version",
+        "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.yml$"],
+        "matchStrings": [
         "(?<depName>runc)_version:.*?[\"'](?<currentValue>[^\"']+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "opencontainers/runc"
+        ],
+        "datasourceTemplate": "github-releases",
+        "depNameTemplate": "opencontainers/runc"
     }
-  ]
+    ]
 }
