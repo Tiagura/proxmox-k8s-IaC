@@ -11,7 +11,7 @@
     {
       "customType": "regex",
       "description": "cni_version",
-      "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>cni)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -21,7 +21,7 @@
     {
       "customType": "regex",
       "description": "containerd_version",
-      "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>containerd)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -31,7 +31,7 @@
     {
       "customType": "regex",
       "description": "crictl_version",
-      "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>crictl)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -41,7 +41,7 @@
     {
       "customType": "regex",
       "description": "k8s_release_version",
-      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>k8s_release)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -51,7 +51,7 @@
     {
       "customType": "regex",
       "description": "k8s_service_release_version (tracks stable.txt)",
-      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>k8s_service_release)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -61,7 +61,7 @@
     {
       "customType": "regex",
       "description": "kubectl_version",
-      "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>kubectl)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
@@ -71,7 +71,7 @@
     {
       "customType": "regex",
       "description": "runc_version",
-      "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.yml$"],
       "matchStrings": [
         "(?<depName>runc)_version:.*?[\"'](?<currentValue>[^\"']+)"
       ],
