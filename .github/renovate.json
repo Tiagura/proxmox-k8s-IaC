@@ -15,7 +15,7 @@
       "matchStrings": [
         "(?<depName>cni)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "containernetworking/plugins"
     },
     {
@@ -25,7 +25,7 @@
       "matchStrings": [
         "(?<depName>containerd)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "containerd/containerd"
     },
     {
@@ -35,7 +35,7 @@
       "matchStrings": [
         "(?<depName>crictl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes-sigs/cri-tools"
     },
     {
@@ -45,7 +45,7 @@
       "matchStrings": [
         "(?<depName>k8s_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes/kubernetes"
     },
     {
@@ -55,7 +55,7 @@
       "matchStrings": [
         "(?<depName>k8s_service_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "http",
+      "datasourceTemplate": "http",
       "depNameTemplate": "https://dl.k8s.io/release/stable.txt"
     },
     {
@@ -65,7 +65,7 @@
       "matchStrings": [
         "(?<depName>kubectl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes/kubectl"
     },
     {
@@ -75,7 +75,7 @@
       "matchStrings": [
         "(?<depName>runc)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
       ],
-      "datasource": "github-releases",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "opencontainers/runc"
     }
   ]
