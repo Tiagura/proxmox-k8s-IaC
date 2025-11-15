@@ -90,18 +90,19 @@ This playbook installs and configures Kubernetes components and provides other n
 
 | Variable             | Default Value  | Description                                                 |
 |----------------------|----------------|-------------------------------------------------------------|
-| `cni_version`        | `1.8.0`        | Version of CNI plugins used for container networking.       |
-| `containerd_version` | `2.1.4`        | Version of containerd runtime.                              |
-| `crictl_version`     | `1.34.0`       | Version of CRI tools.                                       |
-| `runc_version`       | `1.3.1`        | Version of `runc` used as the container runtime shim.       |
+| `cni_version`        | [`version`](./roles/install-cni/defaults/main.yml) | Version of CNI plugins used for container networking.       |
+| `containerd_version` | [`version`](./roles/install-containerd/defaults/main.yml) | Version of containerd runtime |
+| `crictl_version`     | [`version`](./roles/install-crictl/defaults/main.yml) | Version of CRI tools.                                       |
+| `runc_version`       | [`version`](./roles/install-runc/defaults/main.yml) | Version of `runc` used as the container runtime shim.       |
 
 ### Kubernetes Components
 
 | Variable                      | Default Value  | Description                          |
 |-------------------------------|----------------|--------------------------------------|
-| `k8s_release_version`         | `1.34.1`       | Kubernetes version to be installed.  |
-| `k8s_service_release_version` | `0.16.2`       | Version of Kubernetes services.      |
-| `kubectl_version`             | `1.34.1`       | Version of `kubectl` CLI tool.       |
+| `k8s_release_version`         | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml) | Kubernetes version to be installed.  |
+| `k8s_service_release_version` | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml) | Version of Kubernetes services.      |
+| `kubectl_version`             | [`version`](./roles/install-kubectl/defaults/main.yml) | Version of `kubectl` CLI tool.       |
+
 
 ### HA Load Balancer Parameters
 
