@@ -1,3 +1,2 @@
----
 control_plane_endpoint_port: "{{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}"
 pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
