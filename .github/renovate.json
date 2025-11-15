@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["regex", "terraform"],
+  "enabledManagers": ["custom.regex", "terraform"],
 
   "terraform": {
     "managerFilePatterns": ["^terraform/.*\\.tf$"]
@@ -13,7 +13,7 @@
       "description": "cni_version",
       "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>cni)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>cni)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "containernetworking/plugins"
@@ -23,7 +23,7 @@
       "description": "containerd_version",
       "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>containerd)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>containerd)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "containerd/containerd"
@@ -33,7 +33,7 @@
       "description": "crictl_version",
       "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>crictl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>crictl)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes-sigs/cri-tools"
@@ -43,7 +43,7 @@
       "description": "k8s_release_version",
       "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>k8s_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>k8s_release)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes/kubernetes"
@@ -53,7 +53,7 @@
       "description": "k8s_service_release_version (tracks stable.txt)",
       "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>k8s_service_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>k8s_service_release)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "http",
       "depNameTemplate": "https://dl.k8s.io/release/stable.txt"
@@ -63,7 +63,7 @@
       "description": "kubectl_version",
       "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>kubectl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>kubectl)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes/kubectl"
@@ -73,7 +73,7 @@
       "description": "runc_version",
       "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>runc)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>.*?)\""
+        "(?<depName>runc)_version:\\s*['\"]\\{\\{.*?['\"](?<currentValue>[^'\"]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "opencontainers/runc"
