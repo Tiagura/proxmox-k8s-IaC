@@ -1,19 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
-  "extends": [
-    "config:recommended"
-  ],
-
-  "enabledManagers": [
-    "custom.regex",
-    "terraform"
-  ],
-
+  "extends": ["config:recommended"],
+  "enabledManagers": ["custom.regex", "terraform"],
   "terraform": {
-    "managerFilePatterns": [
-      "^terraform/.*\\.tf$"
-    ]
+    "managerFilePatterns": ["^terraform/.*\\.tf$"]
   },
 
   "customDatasources": {
@@ -27,46 +17,87 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Manage versions in Ansible role defaults",
-      "managerFilePatterns": [
-        "^ansible/roles/.*/defaults/main\\.ya?ml$"
-      ],
+      "description": "Manage cni_version in Ansible defaults",
+      "managerFilePatterns": ["^ansible/roles/install-cni/defaults/main\\.ya?ml$"],
       "matchStrings": [
-        "(?<depName>[a-zA-Z0-9_]+)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+        "(?<depName>cni)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
       ],
       "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "containernetworking/plugins",
+      "versioning": "semver"
+    },
 
-      "packageRules": [
-        {
-          "matchDepNames": ["cni"],
-          "packageNameTemplate": "containernetworking/plugins"
-        },
-        {
-          "matchDepNames": ["containerd"],
-          "packageNameTemplate": "containerd/containerd"
-        },
-        {
-          "matchDepNames": ["crictl"],
-          "packageNameTemplate": "kubernetes-sigs/cri-tools"
-        },
-        {
-          "matchDepNames": ["kubectl"],
-          "packageNameTemplate": "kubernetes/kubectl"
-        },
-        {
-          "matchDepNames": ["runc"],
-          "packageNameTemplate": "opencontainers/runc"
-        },
-        {
-          "matchDepNames": ["k8s_release"],
-          "packageNameTemplate": "kubernetes/kubernetes"
-        },
-        {
-          "matchDepNames": ["k8s_service_release"],
-          "datasourceTemplate": "custom",
-          "customDatasourceTemplate": "kubeletStable"
-        }
-      ]
+    {
+      "customType": "regex",
+      "description": "Manage containerd_version in Ansible defaults",
+      "managerFilePatterns": ["^ansible/roles/install-containerd/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>containerd)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "containerd/containerd",
+      "versioning": "semver"
+    },
+
+    {
+      "customType": "regex",
+      "description": "Manage crictl_version in Ansible defaults",
+      "managerFilePatterns": ["^ansible/roles/install-crictl/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>crictl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "kubernetes-sigs/cri-tools",
+      "versioning": "semver"
+    },
+
+    {
+      "customType": "regex",
+      "description": "Manage k8s_release_version in Ansible defaults (kubernetes/kubernetes)",
+      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>k8s_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "kubernetes/kubernetes",
+      "versioning": "semver"
+    },
+
+    {
+      "customType": "regex",
+      "description": "Manage k8s_service_release_version in Ansible defaults (kubelet stable.txt)",
+      "managerFilePatterns": ["^ansible/roles/install-kubeadm-kubelet/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>k8s_service_release)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "custom",
+      "customDatasourceTemplate": "kubeletStable",
+      "packageNameTemplate": "kubelet",
+      "versioning": "semver"
+    },
+
+    {
+      "customType": "regex",
+      "description": "Manage kubectl_version in Ansible defaults",
+      "managerFilePatterns": ["^ansible/roles/install-kubectl/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>kubectl)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "kubernetes/kubectl",
+      "versioning": "semver"
+    },
+
+    {
+      "customType": "regex",
+      "description": "Manage runc_version in Ansible defaults",
+      "managerFilePatterns": ["^ansible/roles/install-runc/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "(?<depName>runc)_version:\\s*'\\{\\{[^}]*?\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"[^}]*?\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "opencontainers/runc",
+      "versioning": "semver"
     }
   ],
 
@@ -76,36 +107,28 @@
       "versioning": "semver",
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "Ensure CNI plugins are compatible with Kubernetes minor version."
-      ]
+      "prBodyNotes": ["Ensure CNI plugins are compatible with Kubernetes minor version."]
     },
     {
       "matchPackageNames": ["containerd/containerd"],
       "versioning": "semver",
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "Ensure containerd release is compatible with targeted Kubernetes minor version."
-      ]
+      "prBodyNotes": ["Ensure containerd release is compatible with targeted Kubernetes minor version."]
     },
     {
       "matchPackageNames": ["kubernetes-sigs/cri-tools"],
       "versioning": "semver",
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "crictl should track the CRI API version supported by kubelet/Kubernetes."
-      ]
+      "prBodyNotes": ["crictl should track the CRI API version supported by kubelet/Kubernetes."]
     },
     {
       "matchPackageNames": ["kubernetes-sigs/gateway-api"],
       "versioning": "semver",
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "Gateway API evolves independently — verify CRDs match target Kubernetes minor."
-      ]
+      "prBodyNotes": ["Gateway API evolves independently — verify CRDs match target Kubernetes minor."]
     },
     {
       "matchPackageNames": ["kubernetes/kubernetes"],
@@ -113,9 +136,7 @@
       "separateMinorPatch": true,
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "k8s_release (kube-apiserver) is the source of truth for cluster version."
-      ]
+      "prBodyNotes": ["k8s_release (kube-apiserver) is the source of truth for cluster version."]
     },
     {
       "matchPackageNames": ["kubernetes/release"],
@@ -123,9 +144,7 @@
       "separateMinorPatch": true,
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "kubeadm/kubelet service files must match the same minor as kube-apiserver."
-      ]
+      "prBodyNotes": ["kubeadm/kubelet service files must match the same minor as kube-apiserver."]
     },
     {
       "matchPackageNames": ["kubernetes/kubectl"],
@@ -133,18 +152,14 @@
       "separateMinorPatch": true,
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "kubectl must be within ±1 minor of kube-apiserver (k8s_release)."
-      ]
+      "prBodyNotes": ["kubectl must be within ±1 minor of kube-apiserver (k8s_release)."]
     },
     {
       "matchPackageNames": ["opencontainers/runc"],
       "versioning": "semver",
       "patch": { "automerge": true, "automergeType": "pr" },
       "minor": { "automerge": false },
-      "prBodyNotes": [
-        "Ensure runc release is compatible with containerd used by the cluster."
-      ]
+      "prBodyNotes": ["Ensure runc release is compatible with containerd used by the cluster."]
     }
   ]
 }
