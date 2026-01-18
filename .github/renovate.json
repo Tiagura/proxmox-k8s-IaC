@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "enabledManagers": ["custom.regex", "terraform"],
 
   "terraform": {
@@ -58,6 +60,14 @@
       "matchStrings": ["runc_version:\\s*'\\{\\{\\s*lookup\\(\"env\", \"runc_version\"\\)\\s*or\\s*\"(?<currentValue>[^\"]+)\"\\s*\\}\\}'"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "opencontainers/runc"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "groupName": "all dependencies",
+      "groupSlug": "all-dependencies"
     }
   ]
 }

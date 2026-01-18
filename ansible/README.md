@@ -39,9 +39,13 @@ This playbook installs and configures Kubernetes components and provides other n
   ```
 
 - **Notes:**
-   If control_plane_endpoint is not provided, Ansible will default to using the IP of the master node.
+   If `control_plane_endpoint` is not provided, Ansible will default to using the IP of the master node.
 
 #### Standard HA Cluster
+In a standard HA cluster, the control plane can be made highly available by embedding HA components on the master nodes or using dedicated load balancer VMs; kube-vip is another option but is not implemented in this project.
+
+##### Single Dedicated Load Balancer
+
 - **Topology:**
   - 3+ Master Nodes
   - N Worker Nodes
@@ -55,7 +59,28 @@ This playbook installs and configures Kubernetes components and provides other n
 - **Notes:**
   If `control_plane_endpoint` is not provided, Ansible will default to using the IP of the load balancer node.
 
-#### Highly Available Cluster with Keepalived
+##### Highly Available Cluster with embebbed LoadBalancers
+
+- **Topology:**
+  - 3+ Master Nodes (HAProxy + KeepAlived)
+  - N Worker Nodes
+  - 0 Load Balancer Node
+
+- **Command:**
+  ```bash
+  ansible-playbook cluster-setup.yml -e "vip_address=<VIRTUAL_IP> control_plane_endpoint=<IP_or_DNS> embedded_ha_control_plane=true keepalived_interface=<interface> lb_pass=<masters_pwd>" -i inventory.ini
+  ```
+
+- **Required Variables:**
+  - `vip_address`: Virtual IP to be managed by Keepalived
+  - `embedded_ha_control_plane`: Set to `true`
+  - `keepalived_interface`: Network interface for Keepalived (e.g., `eth0`)
+  - `lb_pass`: Password for Keepalived auth (e.g. pwd used for masters `master_cipassword`)
+
+- **Notes:**
+  If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
+
+##### Highly Available Cluster with external LoadBalancers
 - **Topology:**
   - 3+ Master Nodes
   - N Worker Nodes
@@ -80,18 +105,20 @@ This playbook installs and configures Kubernetes components and provides other n
 
 ### General Cluster Parameters
 
-| Variable                      | Default Value   | Description                                                                                                                      |
-|------------------------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Variable | Default Value  | Description |
+|----------|----------------|-------------|
 | `control_plane_endpoint`      | *auto-detected* | DNS/IP for Kubernetes control plane access. Defaults to the IP of master/load balancer/vip depending on topology. It is recommended to use a DNS record because it allows flexibility in changing the backend IP (e.g., when scaling or replacing load balancer/master nodes) without reconfiguring clients or the cluster.           |
-| `control_plane_endpoint_port` | `6443`          | Kubernetes API server port.                                                                                                      |
-| `pod_subnet`                  | `10.32.0.0/16`  | CIDR for Kubernetes pod network.                                                                               |
+| `control_plane_endpoint_port` | `6443`          | Kubernetes API server port.                 |
+| `skip_kube_proxy`             | `false`         | Flag to skip the installation of kube-proxy.|
+| `pod_subnet`                  | `10.32.0.0/16`  | CIDR for Kubernetes pod network.            |
+| `service_subnet`              | `10.96.0.0/12`  | CIDR for Kubernetes service network.        |
 
 ### Runtime & Networking Components
 
 | Variable             | Default Value  | Description                                                 |
 |----------------------|----------------|-------------------------------------------------------------|
 | `cni_version`        | [`version`](./roles/install-cni/defaults/main.yml) | Version of CNI plugins used for container networking.       |
-| `containerd_version` | [`version`](./roles/install-containerd/defaults/main.yml) | Version of containerd runtime |
+| `containerd_version` | [`version`](./roles/install-containerd/defaults/main.yml) | Version of `containerd` runtime |
 | `crictl_version`     | [`version`](./roles/install-crictl/defaults/main.yml) | Version of CRI tools.                                       |
 | `runc_version`       | [`version`](./roles/install-runc/defaults/main.yml) | Version of `runc` used as the container runtime shim.       |
 
@@ -99,10 +126,9 @@ This playbook installs and configures Kubernetes components and provides other n
 
 | Variable                      | Default Value  | Description                          |
 |-------------------------------|----------------|--------------------------------------|
-| `k8s_release_version`         | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml) | Kubernetes version to be installed.  |
-| `k8s_service_release_version` | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml) | Version of Kubernetes services.      |
-| `kubectl_version`             | [`version`](./roles/install-kubectl/defaults/main.yml) | Version of `kubectl` CLI tool.       |
-
+| `k8s_release_version`         | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml)  | Kubernetes version to be installed.  |
+| `k8s_service_release_version` | [`version`](./roles/install-kubeadm-kubelet/defaults/main.yml)  | Version of Kubernetes services.      |
+| `kubectl_version`             | [`version`](./roles/install-kubectl/defaults/main.yml)          | Version of `kubectl` CLI tool.       |
 
 ### HA Load Balancer Parameters
 

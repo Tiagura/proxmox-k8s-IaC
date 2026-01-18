@@ -1,14 +1,293 @@
----
-- hosts: all
-  name: Initial bootstrap of nodes
+# ------------------------------------------------
+# Preflight | Validate inventory topology
+# ------------------------------------------------
+- name: Preflight | Validate inventory topology
+  hosts: localhost
+  gather_facts: false
+  vars:
+    embedded_ha_control_plane: "{{ lookup('env', 'embedded_ha_control_plane') | default('false') | bool }}"
+
+    master_count: "{{ groups['masters'] | default([]) | length }}"
+    worker_count: "{{ groups['workers'] | default([]) | length }}"
+    loadbalancer_count: "{{ groups['loadbalancers'] | default([]) | length }}"
+
+  tasks:
+    - name: Show detected topology
+      debug:
+        msg:
+          - "Masters: {{ master_count }}"
+          - "Workers: {{ worker_count }}"
+          - "LoadBalancers: {{ loadbalancer_count }}"
+          - "Embedded HA Control Plane: {{ embedded_ha_control_plane }}"
+
+    - name: Fail if embedded HA is enabled while external load balancers exist
+      fail:
+        msg: |
+          INVALID CONFIGURATION:
+          Embedded HA control plane is ENABLED, but load balancer nodes are defined.
+
+          This configuration is not supported because:
+          - Embedded HA runs HAProxy + Keepalived on MASTER nodes
+          - External load balancers would be ignored
+
+          Choose one of the following:
+          - Disable embedded HA (embedded_ha_control_plane=false)
+          - Remove load balancer nodes from the inventory
+
+          Aborting.
+      when:
+        - embedded_ha_control_plane
+        - loadbalancer_count | int > 0
+
+    - name: HA sanity check
+      pause:
+        prompt: |
+          Detected configuration:
+          - Masters: {{ master_count }}
+          - Load Balancers: {{ loadbalancer_count }}
+          - Embedded HA Control Plane: {{ embedded_ha_control_plane }}
+          - VIP Address: {{ vip_address | default('NOT SET') }}
+
+          {% if embedded_ha_control_plane and master_count | int == 1 %}
+          WARNING:
+          Embedded HA is enabled but only ONE master node exists.
+          This provides NO real high availability.
+          {% endif %}
+
+          {% if (master_count | int > 1)
+                and (embedded_ha_control_plane or loadbalancer_count | int > 1)
+                and vip_address | default('') | trim == '' %}
+          WARNING:
+          HA is configured WITHOUT a VIP address.
+          Failover will NOT be seamless.
+          {% endif %}
+
+          Do you want to continue with this configuration? (yes/no)
+      register: ha_sanity_confirm
+      when: >
+        (embedded_ha_control_plane and master_count | int <= 1)
+        or (
+          (master_count | int > 1)
+          and (embedded_ha_control_plane or loadbalancer_count | int > 1)
+          and vip_address | default('') | trim == ''
+        )
+
+    - name: Abort if HA sanity check was rejected
+      fail:
+        msg: "Aborted by user after HA sanity check."
+      when:
+        - ha_sanity_confirm is defined
+        - ha_sanity_confirm.user_input is defined
+        - ha_sanity_confirm.user_input | lower not in ['y', 'yes']
+
+
+    - name: Fail if no master nodes are defined
+      fail:
+        msg: |
+          ERROR: No master nodes were found in the inventory. At least one master is required to bootstrap a Kubernetes cluster.
+      when: (master_count | int) < 1
+
+    - name: Warn if no worker nodes are defined
+      pause:
+        prompt: |
+          WARNING: No worker nodes were found in the inventory.
+
+          This will result in a control-plane-only cluster.
+
+          Do you want to continue? (yes/no)
+      register: no_workers_confirm
+      when: (worker_count | int) == 0
+
+    - name: Abort if user does not want to continue without workers
+      fail:
+        msg: "Aborted by user: no worker nodes present."
+      when:
+        - (worker_count | int) == 0
+        - no_workers_confirm.user_input | lower not in ['y', 'yes']
+
+    - name: Warn about multi-master cluster without HA control plane
+      pause:
+        prompt: |
+          WARNING: You have {{ master_count }} master nodes and NO load balancers.
+
+          This means:
+          - No external HA control plane endpoint
+          - API server will NOT be highly available
+
+          You may have intended to:
+          - Enable embedded HA control plane
+          - Or add load balancer nodes
+
+          Did you miss something?
+          Do you want to continue anyway? (yes/no)
+      register: no_ha_confirm
+      when:
+        - (master_count | int) > 1
+        - (loadbalancer_count | int) == 0
+        - not embedded_ha_control_plane
+
+    - name: Abort if user does not want to continue without HA control plane
+      fail:
+        msg: "Aborted by user: multi-master without HA control plane."
+      when:
+        - (master_count | int) > 1
+        - (loadbalancer_count | int) == 0
+        - not embedded_ha_control_plane
+        - no_ha_confirm.user_input | lower not in ['y', 'yes']
+
+    - name: Determine if HA control plane should be enabled
+      set_fact:
+        ha_control_plane_enabled: >-
+          {{ embedded_ha_control_plane and (master_count | int) > 1 }}
+
+    - name: Debug HA control plane decision
+      debug:
+        msg: "HA control plane enabled: {{ ha_control_plane_enabled }}"
+
+# =========================================
+# Preflight | Determine HA target group
+# =========================================
+- name: Preflight | Determine HAProxy / Keepalived target group
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Determine HA target group
+      set_fact:
+        ha_target_group: >-
+          {% if ha_control_plane_enabled %}
+            masters
+          {% else %}
+            []
+          {% endif %}
+
+    - name: Debug selected HA target group
+      debug:
+        msg: "HA target group determined: {{ ha_target_group }}"
+
+# ==================================================
+# Preflight | Determine HAProxy / Keepalived role and priority
+# ==================================================
+- name: Preflight | Determine HAProxy / Keepalived role and priority
+  hosts: "{{ hostvars['localhost'].ha_target_group }}"
+  gather_facts: false
+  tasks:
+    - block:
+        - name: Set HA role and Keepalived priority
+          set_fact:
+            haproxy_role: >-
+              {% set nodes = groups['masters'] %}
+              {% if nodes | length == 1 %}
+                single
+              {% elif inventory_hostname == nodes[0] %}
+                master
+              {% else %}
+                slave
+              {% endif %}
+
+            keepalived_priority: >-
+              {% set nodes = groups['masters'] %}
+              {% if nodes | length > 1 %}
+                {{ 150 - (10 * nodes.index(inventory_hostname)) }}
+              {% else %}
+                0
+              {% endif %}
+
+        - name: Debug HA role and Keepalived priority
+          debug:
+            msg: |
+              Host: {{ inventory_hostname }}
+              HAProxy Role: {{ haproxy_role }}
+              Keepalived Priority: {{ keepalived_priority }}
+      when: hostvars['localhost'].ha_control_plane_enabled
+
+# ==================================================
+# Preflight | Select bootstrap master and controlPlaneEndpoint
+# ==================================================
+- name: Preflight | Determine bootstrap master and control plane endpoint
+  hosts: localhost
+  gather_facts: false
+  vars:
+    embedded_ha_control_plane: "{{ lookup('env', 'embedded_ha_control_plane') | default('false') | bool }}"
+    control_plane_endpoint_env: "{{ control_plane_endpoint | default(lookup('env', 'control_plane_endpoint') | default('')) | trim }}"
+    vip_address: "{{ lookup('env', 'vip_address') | default('') | trim }}"
+    control_plane_port: "{{ lookup('env', 'control_plane_endpoint_port') | default('6443') }}"
+    pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16') }}"
+
+  tasks:
+    - name: Ensure at least one master exists
+      fail:
+        msg: |
+          ERROR:
+          No master nodes defined in inventory.
+          At least one master is required to bootstrap the cluster.
+      when: groups['masters'] | default([]) | length < 1
+
+    - name: Select bootstrap master
+      set_fact:
+        bootstrap_master: "{{ groups['masters'][0] }}"
+
+    - name: Show bootstrap master
+      debug:
+        msg: "Bootstrap master: {{ bootstrap_master }}"
+
+    - name: Resolve master IPs
+      set_fact:
+        master_ips: "{{ groups['masters'] | map('extract', hostvars, 'ansible_host') | list }}"
+
+    - name: Resolve HA IPs (LBs or embedded masters)
+      set_fact:
+        ha_ips: "{{ master_ips if embedded_ha_control_plane else
+                  (groups['loadbalancers'] | default([]) |
+                    map('extract', hostvars, 'ansible_host') |
+                    map('trim') | list) }}"
+
+
+    # ------------------------------------------------
+    # Determine controlPlaneEndpoint
+    # ------------------------------------------------
+    # 1. If control_plane_endpoint is already passed trough the environment variable, use it.
+    # 2. If there is at least 2 load balancers, use the passed vip_address as control_plane_endpoint.
+    # 3. If there is only one load balancer, use its IP address as control_plane_endpoint.
+    # 4. If there are no load balancers, use the first master node IP address as control_plane_endpoint.
+    - name: Determine control plane endpoint
+      set_fact:
+        control_plane_endpoint_final: >-
+          {% if control_plane_endpoint_env | trim != '' %}
+            {{ control_plane_endpoint_env | trim }}
+          {% elif ha_ips | length > 1 and vip_address | trim != '' %}
+            {{ vip_address | trim }}
+          {% elif ha_ips | length == 1 %}
+            {{ ha_ips[0] }}
+          {% else %}
+            {{ master_ips[0] }}
+          {% endif %}
+
+    - name: Debug Configuration Information
+      debug:
+        msg: |
+          Bootstrap Master: {{ bootstrap_master }}
+          Master IPs: {{ master_ips }}
+          HA IPs (LBs or embedded masters): {{ ha_ips }}
+          Embedded HA Control Plane: {{ embedded_ha_control_plane }}
+          VIP Address: {{ vip_address }}
+          Control Plane Endpoint (env): {{ control_plane_endpoint_env }}
+          Selected Control Plane Endpoint: {{ control_plane_endpoint_final }}:{{ control_plane_port }}
+
+# ==================================================
+# Bootstrap | General Packages Installation
+# ==================================================
+- name: Bootstrap | General Packages Installation
+  hosts: all
   roles:
     - bootstrap-node
 
-# Install and configure the required packages on all master and worker nodes
-- hosts:
+# =========================================
+# Bootstrap | K8s Packages Installation
+# =========================================
+- name: Bootstrap | K8s Packages Installation
+  hosts:
     - masters
     - workers
-  name: K8s nodes additional bootstrap
   roles:
     - install-runc
     - install-cni
@@ -18,40 +297,18 @@
     - install-kubeadm-kubelet
     - install-kubectl
 
-# Determine the proxies configuration
-# Install and configure the proxies on load balancer nodes according to the inventory.
-- hosts: loadbalancers
-  name: Determine Role and priority
-  tasks:
-    - name: Set Role and Keepalived priority
-      set_fact:
-        haproxy_role: >-
-          {% if groups['loadbalancers'] | length == 1 %}
-            single
-          {% elif inventory_hostname == groups['loadbalancers'][0] %}
-            master
-          {% else %}
-            slave
-          {% endif %}
-        keepalived_priority: >-
-          {% if groups['loadbalancers'] | length > 1 %}
-            {{ 150 - (10 * groups['loadbalancers'].index(inventory_hostname)) }}
-          {% else %}
-            0
-          {% endif %}
-
-    - name: Debug role and priority
-      debug:
-        msg: "This host is acting as: {{ haproxy_role }}"
-
-- hosts: loadbalancers
-  name: Install and Configure load balancers
+# =========================================
+# HA Control Plane Setup | Install and Configure Proxies
+# =========================================
+- name: HA Control Plane Setup | Install and Configure Proxies
+  hosts: "{{ hostvars['localhost'].ha_target_group }}"
   serial: 1
+  when: hostvars['localhost'].ha_control_plane_enabled
   tasks:
     - name: Install HAProxy and Keepalived prerequisites
       include_role:
         name: install-loadbalancer-packages
-    
+
     - name: Configure HAProxy
       include_role:
         name: configure-haproxy
@@ -59,75 +316,18 @@
     - name: Configure Keepalived master role
       include_role:
         name: configure-keepalived-master
-      when: haproxy_role | trim == 'master'
+      when: haproxy_role == 'master'
 
     - name: Configure Keepalived slave role
       include_role:
         name: configure-keepalived-slave
-      when: haproxy_role | trim == 'slave'
+      when: haproxy_role == 'slave'
 
-# Find the first master node to be used for cluster initialization
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Ensure there is at least one master node
-      fail:
-        msg: "No master nodes defined in inventory!"
-      when: groups['masters'] | length < 1
-
-    - name: Show the initial master node
-      debug:
-        msg: "The first master node for initialization is: {{ groups['masters'][0] }}"
-
-# Check VMs configuration to get control_plane_endpoint
-# 1. If control_plane_endpoint is alreeady passed trough the environment variable, use it.
-# 2. If there is at least 2 load balancers, use the passed vip_address as control_plane_endpoint.
-# 3. If there is only one load balancer, use its IP address as control_plane_endpoint.
-# 4. If there are no load balancers, use the first master node IP address as control_plane_endpoint.
-- hosts: localhost
-  gather_facts: false
-  vars:
-    control_plane_endpoint: "{{ lookup('env', 'control_plane_endpoint' | trim) | default('', true) }}"
-    vip_address: "{{ lookup('env', 'vip_address') | default('', true) }}"
-    pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
-  tasks:
-
-    - name: Resolve IPs for loadbalancers
-      set_fact:
-        loadbalancer_ips: >-
-          {% if groups['loadbalancers'] is defined and groups['loadbalancers'] | length > 0 %}
-            {{ groups['loadbalancers'] | map('extract', hostvars, 'ansible_host') | list }}
-          {% else %}
-            []
-          {% endif %}
-
-    - name: Resolve IPs for masters
-      set_fact:
-        master_ips: >-
-          {% if groups['masters'] is defined and groups['masters'] | length > 0 %}
-            {{ groups['masters'] | map('extract', hostvars, 'ansible_host') | list }}
-          {% else %}
-            []
-          {% endif %}
-
-    - name: Determine control_plane_endpoint
-      ansible.builtin.set_fact:
-        control_plane_endpoint_final: >-
-          {% if control_plane_endpoint != '' %}
-            {{ control_plane_endpoint }}
-          {% elif loadbalancer_ips | length > 1 and vip_address != '' %}
-            {{ vip_address }}
-          {% elif loadbalancer_ips | length == 1 %}
-            {{ loadbalancer_ips[0] }}
-          {% else %}
-            {{ master_ips[0] }}
-          {% endif %}
-
-    - name: Show selected control_plane_endpoint
-      ansible.builtin.debug:
-        msg: "Selected control_plane_endpoint: {{ control_plane_endpoint_final | trim }}:{{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}"
-
-- hosts: all
+# =========================================
+# General | Reboot all devices 
+# =========================================
+- name: General | Reboot all devices
+  hosts: all
   tasks:
     - name: Reboot all devices
       ansible.builtin.reboot: 
@@ -135,7 +335,11 @@
         reboot_timeout: 600
       become: true
 
-- hosts: masters
+# =========================================
+# Cluster Setup | Bootstrap initial Master Node
+# =========================================
+- name: Cluster Setup | Bootstrap initial Master Node
+  hosts: masters
   vars_files:
     - roles/install-kubeadm-kubelet/defaults/main.yml
   vars:
@@ -146,8 +350,11 @@
         name: initialize-cluster-kubeadm
       when: inventory_hostname == groups['masters'][0]
 
-- hosts: localhost
-  name: Copy kubeconfig from remote master to Ansible control machine
+# =========================================
+# Cluster Setup | Copy kubeconfig to Setup Machine
+# =========================================
+- name: Cluster Setup | Copy kubeconfig to Setup Machine
+  hosts: localhost
   tasks:
     - name: Ensure .kube directory exists on Ansible control machine
       ansible.builtin.file:
@@ -172,24 +379,39 @@
         group: "{{ ansible_user_gid }}"
         mode: '0644'
 
-- hosts: masters
-  name: Join remaining masters to the cluster
+# =========================================
+# Cluster Setup | Join remaining masters (HA only)
+# =========================================
+- name: Cluster Setup | Join remaining masters
+  hosts: masters
+  become: true
   vars:
-    control_join_command: "{{ hostvars[groups['masters'][0]].kubeadm_join_command_control_plane }}"
+    bootstrap_master: "{{ hostvars['localhost'].bootstrap_master }}"
+    control_join_command: >-
+      {{ hostvars[bootstrap_master].kubeadm_join_command_control_plane | default('') }}
+  when:
+    - hostvars['localhost'].ha_control_plane_enabled
   tasks:
-    - name: Pass kubeadm join command to other masters
+    - name: Join master to the control plane
       include_role:
         name: master-join-cluster-kubeadm
-      when: inventory_hostname != groups['masters'][0] and control_join_command is defined
-  become: true
+      when:
+        - inventory_hostname != bootstrap_master
+        - control_join_command != ''
 
-- hosts: workers
-  name: Join worker nodes to the cluster
+# =========================================
+# Cluster Setup | Join worker nodes
+# =========================================
+- name: Cluster Setup | Join worker nodes
+  hosts: workers
+  become: true
   vars:
-    worker_join_command: "{{ hostvars[groups['masters'][0]].kubeadm_join_command_worker }}"
+    bootstrap_master: "{{ hostvars['localhost'].bootstrap_master }}"
+    worker_join_command: >-
+      {{ hostvars[bootstrap_master].kubeadm_join_command_worker | default('') }}
   tasks:
-    - name: Pass kubeadm join command to worker nodes
+    - name: Join worker to the cluster
       include_role:
         name: worker-join-cluster-kubeadm
-      when: worker_join_command is defined
-  become: true
+      when:
+        - worker_join_command != ''

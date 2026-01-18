@@ -7,8 +7,8 @@ This Terraform module provisions virtual machines on a Proxmox VE cluster for se
 - Connects to the Proxmox VE API
 - Provisions VMs and assigns VM specs such as CPU, memory, disk, and network
 - Injects cloud-init configuration into each VM
-- Outputs an auto-generated Ansible inventory file based on the created infrastructure ???
-- Generates a hosts file containing entries to be added to the /etc/hosts file on the setup machine and all cluster nodes for proper hostname resolution
+- Outputs an auto-generated Ansible inventory file based on the created infrastructure
+- Generates a hosts file containing entries to be added to the /etc/hosts file on the setup machine
 
 ## Proxmox Environment Setup
 

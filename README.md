@@ -13,25 +13,32 @@ You can create clusters that fit your exact needs—from a simple single-master 
 This project relies on a combination of tools and components to automate and manage the deployment of Kubernetes clusters in a Proxmox environment:
 
 ### Infrastructure & Automation
-- **Terraform** – Automates VM provisioning on Proxmox using cloud-init and custom configuration.
-- **Ansible** – Automates the configuration and bootstrapping of Kubernetes components.
+- **Terraform** - Automates VM provisioning on Proxmox using cloud-init and custom configuration.
+- **Ansible** - Automates the configuration and bootstrapping of Kubernetes components.
 
 ### Kubernetes Components
-- **Kubeadm** – Used to initialize and join Kubernetes control-plane and worker nodes.
-- **kubectl** – CLI tool for managing Kubernetes clusters.
+- **Kubeadm** - Used to initialize and join Kubernetes control-plane and worker nodes.
+- **kubectl** - CLI tool for managing Kubernetes clusters.
 - **kubelet** - An agent that runs on each node in the cluster.
 
 ### Container Runtime
-- **containerd** – Lightweight container runtime used as the default backend for Kubernetes.
-- **runc** – Low-level container runtime used by containerd for spawning containers.
+- **containerd** - Lightweight container runtime used as the default backend for Kubernetes.
+- **runc** - Low-level container runtime used by containerd for spawning containers.
 - **crictl** - CLI tool for interacting with container runtimes that implement the Kubernetes Container Runtime Interface (CRI)
 
 ### CNI Plugins
 - [**containernetworking/plugins**](https://github.com/containernetworking/plugins) - Enables cluster networking
 
 ### High Availability & Load Balancing
-- **HAProxy** – Acts as a Layer 4/7 load balancer to distribute API server traffic across control-plane nodes.
-- **Keepalived** – Provides failover and virtual IP (VIP) capabilities for multiple load balancers in an HA setup.
+- **HAProxy** - Acts as a Layer 4/7 load balancer to distribute API server traffic across control-plane nodes.
+- **Keepalived** - Provides failover and virtual IP (VIP) capabilities for multiple load balancers in an HA setup.
+
+### Kubernetes Cluster Config Options
+- **Control Plane Endpoint** - DNS or IP address used by clients and nodes to reach the Kubernetes API server.
+- **Control Plane Endpoint Port** - TCP port on which the Kubernetes API server listens.
+- **Skip Kube-Proxy Install** - Skip installing kube-proxy on nodes.
+- **Pod Subnet CIDR** - Define Kubernetes Pod network CIDR.
+- **Service Subnet CIDR** - Define Kubernetes Service network CIDR.
 
 ## Prerequisites
 
@@ -45,27 +52,8 @@ Before using this project, ensure that the following tools are installed on your
 
 ## Cluster Topology Options
 
-This system supports multiple cluster topologies depending on your high-availability (HA) and scalability needs:
-
-### Basic Cluster
-
-- 1 Master Node
-- N Worker Nodes
-- No load balancer
-
-### Standard HA Cluster
-
-- 3+ Master Nodes
-- N Worker Nodes
-- 1 Load Balancer node using HAProxy
-
-### Advanced HA Cluster
-
-- 3+ Master Nodes
-- N Worker Nodes
-- 2+ Load Balancer nodes (`keepalived` + `HAProxy`) used to ensure failover among load balancers
-
-Each VM is configured dynamically using cloud-init templates, with parameters defined in Terraform variables. Whether you’re spinning up a minimal test cluster or a HA environment, the setup adapts to your needs.
+This project supports multiple cluster topologies depending on your high-availability (HA) and scalability needs, and also allows passing additional configuration options to the cluster. See example of [supported cluster topologies](./ansible/README.md/#usage-examples-by-topology).
+Each created VM is configured dynamically using cloud-init templates, with parameters defined in Terraform variables. Whether you’re spinning up a minimal test cluster or a HA environment, the setup can be adapted to your needs.
 
 ## Usage
 

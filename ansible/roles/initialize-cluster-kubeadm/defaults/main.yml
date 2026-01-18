@@ -1,2 +1,4 @@
 control_plane_endpoint_port: "{{ lookup('env', 'control_plane_endpoint_port') | default('6443', true) }}"
+skip_kube_proxy: "{{ lookup('env', 'skip_kube_proxy') | default(false) }}"
 pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16', true) }}"
+service_subnet: "{{ lookup('env', 'service_subnet') | default('10.96.0.0/12', true) }}"
