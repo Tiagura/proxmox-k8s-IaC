@@ -2,6 +2,26 @@
 
 This Ansible module provides provisioning and configuring a Kubernetes cluster across multiple nodes. The Ansible configuration is split into **two playbooks**, each responsible for a different stage in the cluster setup process.
 
+## Table of Contents
+
+- [Ansible Configuration for Kubernetes Cluster Setup](#ansible-configuration-for-kubernetes-cluster-setup)
+  - [Table of Contents](#table-of-contents)
+  - [Playbook 1: `local-setup.yml`](#playbook-1-local-setupyml)
+    - [Responsibilities:](#responsibilities)
+  - [Playbook 2: `cluster-setup.yaml`](#playbook-2-cluster-setupyaml)
+    - [Responsibilities:](#responsibilities-1)
+    - [Usage Examples by Topology](#usage-examples-by-topology)
+      - [Basic Cluster](#basic-cluster)
+      - [Standard HA Cluster](#standard-ha-cluster)
+        - [Single Dedicated Load Balancer](#single-dedicated-load-balancer)
+        - [Highly Available Cluster with embebbed LoadBalancers](#highly-available-cluster-with-embebbed-loadbalancers)
+        - [Highly Available Cluster with external LoadBalancers](#highly-available-cluster-with-external-loadbalancers)
+  - [Extra Configuration Variables](#extra-configuration-variables)
+    - [General Cluster Parameters](#general-cluster-parameters)
+    - [Runtime \& Networking Components](#runtime--networking-components)
+    - [Kubernetes Components](#kubernetes-components)
+    - [HA Load Balancer Parameters](#ha-load-balancer-parameters)
+
 ## Playbook 1: `local-setup.yml`
 
 This playbook prepares the setup machine and is executed with:
@@ -49,7 +69,7 @@ In a standard HA cluster, the control plane can be made highly available by embe
 - **Topology:**
   - 3+ Master Nodes
   - N Worker Nodes
-  - 1 Load Balancer Node (HAProxy)
+  - 1 Load Balancer Node
 
 - **Command:**
   ```bash
@@ -62,20 +82,20 @@ In a standard HA cluster, the control plane can be made highly available by embe
 ##### Highly Available Cluster with embebbed LoadBalancers
 
 - **Topology:**
-  - 3+ Master Nodes (HAProxy + KeepAlived)
+  - 3+ Master Nodes
   - N Worker Nodes
   - 0 Load Balancer Node
 
 - **Command:**
   ```bash
-  ansible-playbook cluster-setup.yml -e "vip_address=<VIRTUAL_IP> control_plane_endpoint=<IP_or_DNS> embedded_ha_control_plane=true keepalived_interface=<interface> lb_pass=<masters_pwd>" -i inventory.ini
+  ansible-playbook cluster-setup.yml -e "vip_address=<VIRTUAL_IP/MASK> control_plane_endpoint=<VIP_or_DNS> embedded_ha_control_plane=true keepalived_interface=<interface> keepalived_pwd=<pwd>" -i inventory.ini
   ```
 
 - **Required Variables:**
   - `vip_address`: Virtual IP to be managed by Keepalived
   - `embedded_ha_control_plane`: Set to `true`
   - `keepalived_interface`: Network interface for Keepalived (e.g., `eth0`)
-  - `lb_pass`: Password for Keepalived auth (e.g. pwd used for masters `master_cipassword`)
+  - `keepalived_pwd`: Password for Keepalived auth
 
 - **Notes:**
   If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
@@ -84,17 +104,17 @@ In a standard HA cluster, the control plane can be made highly available by embe
 - **Topology:**
   - 3+ Master Nodes
   - N Worker Nodes
-  - 2+ Load Balancer Nodes (Keepalived + HAProxy)
+  - 2+ Load Balancer Nodes
 
 - **Command:**
   ```bash
-  ansible-playbook cluster-setup.yml -e "vip_address=<VIRTUAL_IP> control_plane_endpoint=<IP_or_DNS> keepalived_interface=<interface> lb_pass=<lb_pwd>" -i inventory.ini
+  ansible-playbook cluster-setup.yml -e "vip_address=<VIRTUAL_IP/MASK> control_plane_endpoint=<VIP_or_DNS> keepalived_interface=<interface> keepalived_pwd=<pwd>" -i inventory.ini
   ```
 
 - **Required Variables:**
   - `vip_address`: Virtual IP to be managed by Keepalived
   - `keepalived_interface`: Network interface for Keepalived (e.g., `eth0`)
-  - `lb_pass`: Password for Keepalived auth (e.g. pwd used for loadbalancers `lb_cipassword`)
+  - `keepalived_pwd`: Password for Keepalived auth
 
 - **Notes:**
   If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
@@ -134,8 +154,8 @@ In a standard HA cluster, the control plane can be made highly available by embe
 
 | Variable              | Default Value | Description                                                               |
 |-----------------------|----------------|--------------------------------------------------------------------------|
-| `vip_address`         | `""`           | Required virtual IP for HA clusters.                                     |
+| `vip_address`         | `""`           | Required virtual IP, with mask, for HA clusters.                                     |
 | `keepalived_interface`| `""`           | Interface used by Keepalived (e.g., `eth0`). Must be defined for HA.     |
-| `lb_pass`             | `""`           | Password used by Keepalived for authentication. Must be defined for HA.  |
+| `keepalived_pwd`             | `""`           | Password used by Keepalived for authentication. Must be defined for HA.  |
 
 

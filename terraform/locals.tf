@@ -13,7 +13,6 @@ locals {
 locals {
   lb_defaults = {
     lb_ciuser     = var.lb_ciuser
-    lb_cipassword = var.lb_cipassword
     lb_cores      = var.lb_cores
     lb_memory     = var.lb_memory
     lb_disk       = var.lb_disk
@@ -27,7 +26,6 @@ locals {
 
   master_defaults = {
     master_ciuser     = var.master_ciuser
-    master_cipassword = var.master_cipassword
     master_cores      = var.master_cores
     master_memory     = var.master_memory
     master_disk       = var.master_disk
@@ -41,7 +39,6 @@ locals {
 
   worker_defaults = {
     worker_ciuser     = var.worker_ciuser
-    worker_cipassword = var.worker_cipassword
     worker_cores      = var.worker_cores
     worker_memory     = var.worker_memory
     worker_disk       = var.worker_disk
@@ -63,7 +60,6 @@ locals {
       pve_node_vm_storage   = lb.pve_node_vm_storage
       pve_network_bridge    = lb.pve_network_bridge
       username              = lb.lb_ciuser
-      password              = lb.lb_cipassword
       cores                 = lb.lb_cores
       memory                = lb.lb_memory
       disk                  = lb.lb_disk
@@ -76,7 +72,6 @@ locals {
       pve_node_vm_storage   = m.pve_node_vm_storage
       pve_network_bridge    = m.pve_network_bridge
       username              = m.master_ciuser
-      password              = m.master_cipassword
       cores                 = m.master_cores
       memory                = m.master_memory
       disk                  = m.master_disk
@@ -89,7 +84,6 @@ locals {
       pve_node_vm_storage   = w.pve_node_vm_storage
       pve_network_bridge    = w.pve_network_bridge
       username              = w.worker_ciuser
-      password              = w.worker_cipassword
       cores                 = w.worker_cores
       memory                = w.worker_memory
       disk                  = w.worker_disk

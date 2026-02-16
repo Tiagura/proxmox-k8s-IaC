@@ -25,8 +25,8 @@ resource "proxmox_virtual_environment_file" "meta_data_cloud_config" {
       - net-tools
       - curl
     runcmd:
-      - systemctl enable qemu-guest-agent
       - systemctl start qemu-guest-agent
+      - systemctl enable qemu-guest-agent
       - echo "done" > /tmp/cloud-config.done
     EOF
 
@@ -41,7 +41,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
   on_boot   = var.vm_autostart
 
   agent {
-    enabled = true
+    # Issue: https://github.com/bpg/terraform-provider-proxmox/issues/2091
+    # Commit: https://github.com/sulibot/home-ops/commit/e121348869dbfcf151f4ffd583bede2ff30240d4
+    enabled = false
   }
 
   cpu {
@@ -56,7 +58,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
   disk {
     datastore_id = each.value.pve_node_vm_storage
     file_id      = proxmox_virtual_environment_download_file.cloud_image["${each.value.pve_node}-${each.value.pve_node_datastore}"].id
-    file_format  = "qcow2"
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
@@ -79,7 +80,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
     user_account {
       keys     = [data.local_file.ssh_public_key.content]
       username = each.value.username
-      password = each.value.password
     }
 
     meta_data_file_id = proxmox_virtual_environment_file.meta_data_cloud_config[each.value.hostname].id
@@ -95,11 +95,13 @@ resource "proxmox_virtual_environment_vm" "vm" {
 resource "proxmox_virtual_environment_download_file" "cloud_image" {
   for_each = local.unique_download_targets
 
-  content_type = "iso"
+  content_type = "import"
   datastore_id = each.value.datastore_id
   node_name    = each.value.node_name
 
   url = var.cloud_image_url
+  # extrach the filename from the url and replace the extension with .qcow2
+  file_name = "${regex("([^/]+)\\.[^/.]+$", var.cloud_image_url)[0]}.qcow2"
 }
 
 resource "local_file" "ansible_inventory_file" {

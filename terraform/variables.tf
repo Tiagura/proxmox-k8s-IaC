@@ -78,7 +78,6 @@ variable "load_balancers" {
     pve_node_vm_storage = string
     pve_network_bridge = string
     lb_ciuser = optional(string)
-    lb_cipassword = optional(string)
     lb_cores = optional(number)
     lb_memory = optional(number)
     lb_disk = optional(number)
@@ -89,12 +88,6 @@ variable "load_balancers" {
 variable "lb_ciuser" {
   description = "Cloud-init username for load balancers"
   type        = string
-}
-
-variable "lb_cipassword" {
-  description = "Cloud-init password for load balancers"
-  type        = string
-  sensitive   = true
 }
 
 variable "lb_cores" {
@@ -126,7 +119,6 @@ variable "masters" {
     pve_node_vm_storage = string
     pve_network_bridge = string
     master_ciuser = optional(string)
-    master_cipassword = optional(string)
     master_cores = optional(number)
     master_memory = optional(number)
     master_disk = optional(number)
@@ -137,12 +129,6 @@ variable "masters" {
 variable "master_ciuser" {
   description = "Cloud-init username for masters"
   type        = string
-}
-
-variable "master_cipassword" {
-  description = "Cloud-init password for masters"
-  type        = string
-  sensitive   = true
 }
 
 variable "master_cores" {
@@ -174,7 +160,6 @@ variable "workers" {
     pve_node_vm_storage = string
     pve_network_bridge = string
     worker_ciuser = optional(string)
-    worker_cipassword = optional(string)
     worker_cores = optional(number)
     worker_memory = optional(number)
     worker_disk = optional(number)
@@ -185,12 +170,6 @@ variable "workers" {
 variable "worker_ciuser" {
   description = "Cloud-init username for workers"
   type        = string
-}
-
-variable "worker_cipassword" {
-  description = "Cloud-init password for workers"
-  type        = string
-  sensitive   = true
 }
 
 variable "worker_cores" {

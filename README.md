@@ -8,6 +8,25 @@ You can create clusters that fit your exact needs—from a simple single-master 
 
 > The Kubernetes setup process follows the official best practices outlined in the [kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/).
 
+## Table of Contents
+
+- [Kubernetes Cluster Automation on Proxmox using Terraform and Ansible](#kubernetes-cluster-automation-on-proxmox-using-terraform-and-ansible)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Tools \& Stack](#tools--stack)
+    - [Infrastructure \& Automation](#infrastructure--automation)
+    - [Kubernetes Components](#kubernetes-components)
+    - [Container Runtime](#container-runtime)
+    - [CNI Plugins](#cni-plugins)
+    - [High Availability \& Load Balancing](#high-availability--load-balancing)
+    - [Kubernetes Cluster Config Options](#kubernetes-cluster-config-options)
+  - [Prerequisites](#prerequisites)
+  - [Cluster Topology Options](#cluster-topology-options)
+  - [Usage](#usage)
+  - [Some Important Notes](#some-important-notes)
+    - [Terraform](#terraform)
+    - [Kubernetes](#kubernetes)
+
 ## Tools & Stack
 
 This project relies on a combination of tools and components to automate and manage the deployment of Kubernetes clusters in a Proxmox environment:
@@ -82,6 +101,12 @@ Follow these steps to use the project:
    - Set up HAProxy and Keepalived for high availability (if configured)
 
 ## Some Important Notes
+
+### Terraform
+   - **QEMU guest agent is disabled by default** because enabling it causes Terraform to hang until the timeout (default 15 minutes). Various fixes were attempted but didn’t resolve the issue. If your use case requires the agent, you can enable it, but it is recommended to reduce the timeout (e.g., 5 minutes) depending on your Proxmox node performance.
+   - **VM creation parallelism**: creating multiple VMs in parallel may result in some VMs failing with an HTTP 500 “username not set” error, even though the username is set. As a workaround, you can reduce Terraform’s parallelism (with the flag `-parallelism=` set). Test different values to find what works best for your environment ( in my case is it 3/4).
+
+### Kubernetes
    - **No container network interface (CNI)** is installed in the resulting cluster, pick your CNI of choice and install it.
    - If the `pod_subnet` variable is not provided during the execution of the Ansible `playbook.yaml`, the default pod CIDR used will be `10.32.0.0/16`. Make sure that your chosen CNI configuration is updated accordingly to avoid networking issues.
    - This setup is designed to be **managed from the setup machine** where Terraform and Ansible are executed. If you prefer to manage the cluster from a different machine:

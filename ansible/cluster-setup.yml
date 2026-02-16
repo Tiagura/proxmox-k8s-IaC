@@ -154,51 +154,12 @@
     - name: Determine HA target group
       set_fact:
         ha_target_group: >-
-          {% if ha_control_plane_enabled %}
-            masters
-          {% else %}
-            []
-          {% endif %}
+          {{ 'masters' if ha_control_plane_enabled else 'loadbalancers' }}
+      delegate_facts: true
 
     - name: Debug selected HA target group
       debug:
         msg: "HA target group determined: {{ ha_target_group }}"
-
-# ==================================================
-# Preflight | Determine HAProxy / Keepalived role and priority
-# ==================================================
-- name: Preflight | Determine HAProxy / Keepalived role and priority
-  hosts: "{{ hostvars['localhost'].ha_target_group }}"
-  gather_facts: false
-  tasks:
-    - block:
-        - name: Set HA role and Keepalived priority
-          set_fact:
-            haproxy_role: >-
-              {% set nodes = groups['masters'] %}
-              {% if nodes | length == 1 %}
-                single
-              {% elif inventory_hostname == nodes[0] %}
-                master
-              {% else %}
-                slave
-              {% endif %}
-
-            keepalived_priority: >-
-              {% set nodes = groups['masters'] %}
-              {% if nodes | length > 1 %}
-                {{ 150 - (10 * nodes.index(inventory_hostname)) }}
-              {% else %}
-                0
-              {% endif %}
-
-        - name: Debug HA role and Keepalived priority
-          debug:
-            msg: |
-              Host: {{ inventory_hostname }}
-              HAProxy Role: {{ haproxy_role }}
-              Keepalived Priority: {{ keepalived_priority }}
-      when: hostvars['localhost'].ha_control_plane_enabled
 
 # ==================================================
 # Preflight | Select bootstrap master and controlPlaneEndpoint
@@ -302,17 +263,44 @@
 # =========================================
 - name: HA Control Plane Setup | Install and Configure Proxies
   hosts: "{{ hostvars['localhost'].ha_target_group }}"
-  serial: 1
-  when: hostvars['localhost'].ha_control_plane_enabled
+  gather_facts: false
+  vars:
+    ha_nodes: "{{ groups[hostvars['localhost'].ha_target_group] }}"
   tasks:
+
+    - name: Set HA role and Keepalived priority
+      set_fact:
+        haproxy_role: >-
+          {{ ('single' if ha_nodes | length == 1
+             else 'master' if inventory_hostname == ha_nodes[0]
+             else 'slave') | trim }}
+
+        keepalived_priority: >-
+          {{ (150 - (10 * ha_nodes.index(inventory_hostname))
+             if ha_nodes | length > 1 else 0) }}
+
+    - name: Debug HA role and Keepalived priority
+      debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          HAProxy Role: {{ haproxy_role }}
+          Keepalived Priority: {{ keepalived_priority }}
+
     - name: Install HAProxy and Keepalived prerequisites
       include_role:
         name: install-loadbalancer-packages
 
+    # -------------------------------------------------
+    # External LB mode configure HAProxy
+    # -------------------------------------------------
     - name: Configure HAProxy
       include_role:
         name: configure-haproxy
+      when: not hostvars['localhost'].ha_control_plane_enabled
 
+    # -------------------------------------------------
+    # Embedded HA or External LB configure Keepalived
+    # -------------------------------------------------
     - name: Configure Keepalived master role
       include_role:
         name: configure-keepalived-master
@@ -380,7 +368,7 @@
         mode: '0644'
 
 # =========================================
-# Cluster Setup | Join remaining masters (HA only)
+# Cluster Setup | Join remaining masters
 # =========================================
 - name: Cluster Setup | Join remaining masters
   hosts: masters
@@ -389,8 +377,6 @@
     bootstrap_master: "{{ hostvars['localhost'].bootstrap_master }}"
     control_join_command: >-
       {{ hostvars[bootstrap_master].kubeadm_join_command_control_plane | default('') }}
-  when:
-    - hostvars['localhost'].ha_control_plane_enabled
   tasks:
     - name: Join master to the control plane
       include_role:
