@@ -46,6 +46,16 @@
     },
     {
       "customType": "regex",
+      "description": "k8s_release_version",
+      "managerFilePatterns": ["ansible/roles/install-kubeadm-kubelet/defaults/main.yml"],
+      "matchStrings": [
+        "k8s_release_version:\\s*'\\{\\{\\s*lookup\\(\"env\", \"k8s_release_version\"\\)\\s*or\\s*\"(?<currentValue>[^\"]+)\"\\s*\\}\\}'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "kubernetes/kubernetes"
+    },
+    {
+      "customType": "regex",
       "description": "kubectl_version",
       "managerFilePatterns": ["ansible/roles/install-kubectl/defaults/main.yml"],
       "matchStrings": ["kubectl_version:\\s*'\\{\\{\\s*lookup\\(\"env\", \"kubectl_version\"\\)\\s*or\\s*\"(?<currentValue>[^\"]+)\"\\s*\\}\\}'"],
