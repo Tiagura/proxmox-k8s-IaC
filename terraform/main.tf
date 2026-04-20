@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   disk {
     datastore_id = each.value.pve_node_vm_storage
-    file_id      = proxmox_virtual_environment_download_file.cloud_image["${each.value.pve_node}-${each.value.pve_node_datastore}"].id
+    file_id      = proxmox_download_file.cloud_image["${each.value.pve_node}-${each.value.pve_node_datastore}"].id
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
@@ -92,7 +92,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   tags = ["Terraform", "k8s-node"]
 }
 
-resource "proxmox_virtual_environment_download_file" "cloud_image" {
+resource "proxmox_download_file" "cloud_image" {
   for_each = local.unique_download_targets
 
   content_type = "import"
