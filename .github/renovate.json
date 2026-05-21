@@ -75,9 +75,11 @@
 
   "packageRules": [
     {
-      "matchPackagePatterns": ["*"],
       "groupName": "all dependencies",
-      "groupSlug": "all-dependencies"
+      "groupSlug": "all-dependencies",
+      "matchPackageNames": [
+        "*"
+      ]
     }
   ]
 }
