@@ -1,9 +1,12 @@
-- name: Add Terraform-generated hosts to target nodes
-  become: true  # Needed for editing /etc/hosts
+- name: Add Terraform-generated hosts to cloud-init template
+  become: true
   blockinfile:
     path: /etc/cloud/templates/hosts.debian.tmpl  # Persistent across reboots
     block: "{{ lookup('file', '../../../hosts') }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Terraform Hosts"
+
+- name: Add Terraform-generated hosts to /etc/hosts
+  become: true
   blockinfile:
     path: /etc/hosts # Temporary, will be overwritten by cloud-init
     block: "{{ lookup('file', '../../../hosts') }}"
@@ -17,6 +20,11 @@
 
 - name: Load kernel modules for Kubernetes
   include_tasks: load-kernel-modules.yml
+
+# Disable multipath if the variable is set to true
+- name: Disable multipath if specified
+  when: disable_multipath | bool
+  include_tasks: disable-multipath.yml
 
 - name: Set sysctl parameters for Kubernetes
   include_tasks: set-sysctl.yml

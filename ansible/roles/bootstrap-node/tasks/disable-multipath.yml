@@ -1,0 +1,13 @@
+---
+- name: Check if multipath services are running
+  ansible.builtin.shell: systemctl is-active multipathd
+  register: multipathd_status
+  changed_when: false
+  ignore_errors: true
+
+- name: Stop and disable multipathd
+  ansible.builtin.systemd:
+    name: multipathd
+    state: stopped
+    enabled: false
+  become: true

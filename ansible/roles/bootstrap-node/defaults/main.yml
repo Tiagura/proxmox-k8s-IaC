@@ -1,0 +1,1 @@
+disable_multipath: "{{ lookup('env', 'disable_multipath') | default(false) | bool }}"

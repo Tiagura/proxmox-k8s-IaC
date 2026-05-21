@@ -17,6 +17,7 @@ This Ansible module provides provisioning and configuring a Kubernetes cluster a
         - [Highly Available Cluster with embebbed LoadBalancers](#highly-available-cluster-with-embebbed-loadbalancers)
         - [Highly Available Cluster with external LoadBalancers](#highly-available-cluster-with-external-loadbalancers)
   - [Extra Configuration Variables](#extra-configuration-variables)
+    - [Cloud Init Bootstrap Parameters](#cloud-init-bootstrap-parameters)
     - [General Cluster Parameters](#general-cluster-parameters)
     - [Runtime \& Networking Components](#runtime--networking-components)
     - [Kubernetes Components](#kubernetes-components)
@@ -122,6 +123,12 @@ In a standard HA cluster, the control plane can be made highly available by embe
 ## Extra Configuration Variables
 
 > Any variable below can be overridden using the `-e` flag on the command line. If not passed, Ansible looks for an environment variable. If that is also unset, the default value is used.
+
+### Cloud Init Bootstrap Parameters
+
+| Variable | Default Value  | Description |
+|----------|----------------|-------------|
+| `disable_multipath` | `false` | If set to `true`, disables and stops the multipathd service during bootstrap to prevent multipath device management on the node. |
 
 ### General Cluster Parameters
 
