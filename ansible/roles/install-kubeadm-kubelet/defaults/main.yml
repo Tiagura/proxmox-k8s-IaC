@@ -1,2 +1,2 @@
-k8s_release_version: '{{ lookup("env", "k8s_release_version") or "1.36.4" }}'
+k8s_release_version: '{{ lookup("env", "k8s_release_version") or "1.37.0" }}'
 k8s_service_release_version: '{{ lookup("env", "k8s_service_release_version") or "0.21.1" }}'
