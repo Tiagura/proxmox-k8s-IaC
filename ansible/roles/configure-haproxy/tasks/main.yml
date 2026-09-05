@@ -10,8 +10,9 @@
       backend kubernetes-backend
           mode tcp
           balance roundrobin
+          option httpchk GET /livez
         {% for host in groups['masters'] | default([]) %}
-          server {{ host }} {{ hostvars[host].ansible_host }}:{{ control_plane_endpoint_port | default('6443') }} check
+          server {{ host }} {{ hostvars[host].ansible_host }}:{{ control_plane_endpoint_port | default('6443') }} check check-ssl verify none
         {% endfor %}
 
 - name: Append HAProxy backend config block to existing haproxy.cfg

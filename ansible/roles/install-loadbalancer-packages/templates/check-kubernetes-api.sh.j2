@@ -1,0 +1,6 @@
+#!/bin/sh
+
+curl --silent --show-error --fail --max-time 2 \
+  --insecure \
+  "https://127.0.0.1:{{ control_plane_endpoint_port | default('6443') }}/livez" \
+  >/dev/null

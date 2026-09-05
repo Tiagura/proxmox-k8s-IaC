@@ -4,10 +4,20 @@
     update_cache: yes
   become: true
 
-- name: Install HAProxy and Keepalived packages
+- name: Install packages
   ansible.builtin.apt:
     name:
       - haproxy
       - keepalived
+      - curl
     state: present
+  become: true
+
+- name: Install Kubernetes API health-check script
+  ansible.builtin.template:
+    src: check-kubernetes-api.sh.j2
+    dest: /usr/local/bin/check-kubernetes-api.sh
+    owner: root
+    group: root
+    mode: '0755'
   become: true

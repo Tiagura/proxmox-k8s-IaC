@@ -16,6 +16,7 @@ This Ansible module provides provisioning and configuring a Kubernetes cluster a
         - [Single Dedicated Load Balancer](#single-dedicated-load-balancer)
         - [Highly Available Cluster with embebbed LoadBalancers](#highly-available-cluster-with-embebbed-loadbalancers)
         - [Highly Available Cluster with external LoadBalancers](#highly-available-cluster-with-external-loadbalancers)
+    - [HA Health-Check Matrix](#ha-health-check-matrix)
   - [Extra Configuration Variables](#extra-configuration-variables)
     - [Cloud Init Bootstrap Parameters](#cloud-init-bootstrap-parameters)
     - [General Cluster Parameters](#general-cluster-parameters)
@@ -78,7 +79,7 @@ In a standard HA cluster, the control plane can be made highly available by embe
   ```
 
 - **Notes:**
-  If `control_plane_endpoint` is not provided, Ansible will default to using the IP of the load balancer node.
+  If `control_plane_endpoint` is not provided, Ansible will default to using the IP of the load balancer node. Keepalived is not configured for a single load balancer; HAProxy checks the master nodes directly.
 
 ##### Highly Available Cluster with embebbed LoadBalancers
 
@@ -99,7 +100,7 @@ In a standard HA cluster, the control plane can be made highly available by embe
   - `keepalived_pwd`: Password for Keepalived auth
 
 - **Notes:**
-  If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
+  If `control_plane_endpoint` is not provided, Ansible will default to using the host portion of `vip_address`. Keepalived manages the VIP and checks the local Kubernetes API `/livez` endpoint. HAProxy is not configured on embedded masters because kube-apiserver already owns port `6443`.
 
 ##### Highly Available Cluster with external LoadBalancers
 - **Topology:**
@@ -118,7 +119,20 @@ In a standard HA cluster, the control plane can be made highly available by embe
   - `keepalived_pwd`: Password for Keepalived auth
 
 - **Notes:**
-  If `control_plane_endpoint` is not provided, Ansible will default to using the `vip_address`.
+  If `control_plane_endpoint` is not provided, Ansible will default to using the host portion of `vip_address`. Keepalived manages the VIP, while HAProxy listens on `*:6443` and checks the master nodes directly.
+
+### HA Health-Check Matrix
+
+The health-check script runs `curl -k https://127.0.0.1:6443/livez`. In embedded mode this checks the local Kubernetes API server. On external load balancers it checks the local HAProxy listener, which in turn must reach a healthy API backend.
+
+| Scenario | HAProxy configured on | Keepalived configured on | Keepalived health check | HAProxy backend health check | VIP behavior |
+|----------|-----------------------|--------------------------|-------------------------|-----------------------------|--------------|
+| 1 Master | None | None | None | None | No floating VIP; master IP is used |
+| 2+ Masters | None in non-embedded mode | Masters when `embedded_ha_control_plane=true` | Local Kubernetes API `/livez` | None | Keepalived can move the VIP between masters; no load balancing from HAProxy |
+| 1 LB and 2+ Masters | LB | None | None | LB checks every master's HTTPS `/livez` endpoint | No floating VIP; single LB IP is used |
+| 2+ LBs and 2+ Masters | Every LB | Every LB | Local HAProxy listener, which checks `/livez` through its backend | Every LB checks every master's HTTPS `/livez` endpoint | VIP moves between LBs when the local health check fails |
+
+HAProxy listens on `*:6443` and uses HTTPS `/livez` checks with certificate verification disabled. Keepalived uses the same local probe through `track_script`; it is not limited to ICMP ping or node reachability.
 
 ## Extra Configuration Variables
 
@@ -164,5 +178,7 @@ In a standard HA cluster, the control plane can be made highly available by embe
 | `vip_address`         | `""`           | Required virtual IP, with mask, for HA clusters.                                     |
 | `keepalived_interface`| `""`           | Interface used by Keepalived (e.g., `eth0`). Must be defined for HA.     |
 | `keepalived_pwd`             | `""`           | Password used by Keepalived for authentication. Must be defined for HA.  |
+
+Keepalived uses `/usr/local/bin/check-kubernetes-api.sh` as an application health check. In embedded mode it checks the local Kubernetes API directly; on external load balancers it checks the local HAProxy listener and its Kubernetes API backend. HAProxy also checks each master through the Kubernetes API `/livez` endpoint rather than only checking whether TCP port `6443` is open.
 
 

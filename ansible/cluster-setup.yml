@@ -154,7 +154,7 @@
     - name: Determine HA target group
       set_fact:
         ha_target_group: >-
-          {{ 'masters' if ha_control_plane_enabled else 'loadbalancers' }}
+          {{ 'masters' if hostvars['localhost'].ha_control_plane_enabled else 'loadbalancers' }}
       delegate_facts: true
 
     - name: Debug selected HA target group
@@ -171,6 +171,7 @@
     embedded_ha_control_plane: "{{ lookup('env', 'embedded_ha_control_plane') | default('false') | bool }}"
     control_plane_endpoint_env: "{{ control_plane_endpoint | default(lookup('env', 'control_plane_endpoint') | default('')) | trim }}"
     vip_address: "{{ lookup('env', 'vip_address') | default('') | trim }}"
+    vip_address_host: "{{ (vip_address.split('/'))[0] | trim }}"
     control_plane_port: "{{ lookup('env', 'control_plane_endpoint_port') | default('6443') }}"
     pod_subnet: "{{ lookup('env', 'pod_subnet') | default('10.32.0.0/16') }}"
 
@@ -207,7 +208,7 @@
     # Determine controlPlaneEndpoint
     # ------------------------------------------------
     # 1. If control_plane_endpoint is already passed trough the environment variable, use it.
-    # 2. If there is at least 2 load balancers, use the passed vip_address as control_plane_endpoint.
+    # 2. If HA has at least 2 nodes, use the VIP as control_plane_endpoint.
     # 3. If there is only one load balancer, use its IP address as control_plane_endpoint.
     # 4. If there are no load balancers, use the first master node IP address as control_plane_endpoint.
     - name: Determine control plane endpoint
@@ -215,8 +216,8 @@
         control_plane_endpoint_final: >-
           {% if control_plane_endpoint_env | trim != '' %}
             {{ control_plane_endpoint_env | trim }}
-          {% elif ha_ips | length > 1 and vip_address | trim != '' %}
-            {{ vip_address | trim }}
+          {% elif ha_ips | length > 1 and vip_address_host != '' %}
+            {{ vip_address_host }}
           {% elif ha_ips | length == 1 %}
             {{ ha_ips[0] }}
           {% else %}
@@ -231,6 +232,7 @@
           HA IPs (LBs or embedded masters): {{ ha_ips }}
           Embedded HA Control Plane: {{ embedded_ha_control_plane }}
           VIP Address: {{ vip_address }}
+          VIP Address (host): {{ vip_address_host }}
           Control Plane Endpoint (env): {{ control_plane_endpoint_env }}
           Selected Control Plane Endpoint: {{ control_plane_endpoint_final }}:{{ control_plane_port }}
 
@@ -264,10 +266,11 @@
 # HA Control Plane Setup | Install and Configure Proxies
 # =========================================
 - name: HA Control Plane Setup | Install and Configure Proxies
-  hosts: "{{ hostvars['localhost'].ha_target_group }}"
+  hosts: "masters:loadbalancers"
   gather_facts: false
   vars:
     ha_nodes: "{{ groups[hostvars['localhost'].ha_target_group] }}"
+    vip_address: "{{ lookup('env', 'vip_address') | default('', true) | trim }}"
   tasks:
 
     - name: Set HA role and Keepalived priority
@@ -280,6 +283,7 @@
         keepalived_priority: >-
           {{ (150 - (10 * ha_nodes.index(inventory_hostname))
              if ha_nodes | length > 1 else 0) }}
+      when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
     - name: Debug HA role and Keepalived priority
       debug:
@@ -287,31 +291,37 @@
           Host: {{ inventory_hostname }}
           HAProxy Role: {{ haproxy_role }}
           Keepalived Priority: {{ keepalived_priority }}
+          when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
     - name: Install HAProxy and Keepalived prerequisites
       include_role:
         name: install-loadbalancer-packages
+      when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
-    # -------------------------------------------------
-    # External LB mode configure HAProxy
-    # -------------------------------------------------
     - name: Configure HAProxy
       include_role:
         name: configure-haproxy
-      when: not hostvars['localhost'].ha_control_plane_enabled
+      when:
+        - not hostvars['localhost'].ha_control_plane_enabled
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
-    # -------------------------------------------------
-    # Embedded HA or External LB configure Keepalived
-    # -------------------------------------------------
     - name: Configure Keepalived master role
       include_role:
         name: configure-keepalived-master
-      when: haproxy_role == 'master'
+      when:
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
+        - ha_nodes | length > 1
+        - vip_address | default('') | trim != ''
+        - haproxy_role == 'master'
 
     - name: Configure Keepalived slave role
       include_role:
         name: configure-keepalived-slave
-      when: haproxy_role == 'slave'
+      when:
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
+        - ha_nodes | length > 1
+        - vip_address | default('') | trim != ''
+        - haproxy_role == 'slave'
 
 # =========================================
 # General | Reboot all devices 

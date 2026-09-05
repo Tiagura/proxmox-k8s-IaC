@@ -1,3 +1,16 @@
+global_defs {
+    enable_script_security
+}
+
+vrrp_script check_kubernetes_api {
+    script "/usr/local/bin/check-kubernetes-api.sh"
+    interval 2
+    timeout 2
+    fall 3
+    rise 2
+    weight -50
+}
+
 vrrp_instance VI_1 {
     state BACKUP
     interface {{ keepalived_interface }}
@@ -7,6 +20,9 @@ vrrp_instance VI_1 {
     authentication {
         auth_type PASS
         auth_pass {{ keepalived_pwd }}
+    }
+    track_script {
+        check_kubernetes_api
     }
     virtual_ipaddress {
         {{ vip_address }}
