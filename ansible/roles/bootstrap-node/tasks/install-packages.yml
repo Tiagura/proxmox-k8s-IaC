@@ -8,6 +8,11 @@
       - wget
       - git
       - nfs-common
+      - "{{ additional_packages }}"
+
+- name: Flatten package list
+  ansible.builtin.set_fact:
+    packages: "{{ packages | flatten }}"
 
 - name: Check if packages are installed (Errors will be ignored.)
   ansible.builtin.shell: dpkg-query -s {{ item }} | grep 'install ok installed'

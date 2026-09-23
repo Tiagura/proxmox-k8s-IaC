@@ -1,1 +1,3 @@
 disable_multipath: "{{ lookup('env', 'disable_multipath') | default(false) | bool }}"
+additional_packages: "{{ lookup('env', 'additional_packages') | default('', true) | split(',') | map('trim') | reject('equalto', '') | list }}"
+additional_kernel_modules: "{{ lookup('env', 'additional_kernel_modules') | default('', true) | split(',') | map('trim') | reject('equalto', '') | list }}"

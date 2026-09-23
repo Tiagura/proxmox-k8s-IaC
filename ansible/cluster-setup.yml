@@ -264,7 +264,7 @@
 # HA Control Plane Setup | Install and Configure Proxies
 # =========================================
 - name: HA Control Plane Setup | Install and Configure Proxies
-  hosts: "{{ hostvars['localhost'].ha_target_group }}"
+  hosts: all
   gather_facts: false
   vars:
     ha_nodes: "{{ groups[hostvars['localhost'].ha_target_group] }}"
@@ -280,6 +280,7 @@
         keepalived_priority: >-
           {{ (150 - (10 * ha_nodes.index(inventory_hostname))
              if ha_nodes | length > 1 else 0) }}
+      when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
     - name: Debug HA role and Keepalived priority
       debug:
@@ -287,10 +288,12 @@
           Host: {{ inventory_hostname }}
           HAProxy Role: {{ haproxy_role }}
           Keepalived Priority: {{ keepalived_priority }}
+      when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
     - name: Install HAProxy and Keepalived prerequisites
       include_role:
         name: install-loadbalancer-packages
+      when: inventory_hostname in groups[hostvars['localhost'].ha_target_group]
 
     # -------------------------------------------------
     # External LB mode configure HAProxy
@@ -298,7 +301,9 @@
     - name: Configure HAProxy
       include_role:
         name: configure-haproxy
-      when: not hostvars['localhost'].ha_control_plane_enabled
+      when:
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
+        - not hostvars['localhost'].ha_control_plane_enabled
 
     # -------------------------------------------------
     # Embedded HA or External LB configure Keepalived
@@ -306,12 +311,16 @@
     - name: Configure Keepalived master role
       include_role:
         name: configure-keepalived-master
-      when: haproxy_role == 'master'
+      when:
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
+        - haproxy_role == 'master'
 
     - name: Configure Keepalived slave role
       include_role:
         name: configure-keepalived-slave
-      when: haproxy_role == 'slave'
+      when:
+        - inventory_hostname in groups[hostvars['localhost'].ha_target_group]
+        - haproxy_role == 'slave'
 
 # =========================================
 # General | Reboot all devices 

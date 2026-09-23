@@ -129,6 +129,8 @@ In a standard HA cluster, the control plane can be made highly available by embe
 | Variable | Default Value  | Description |
 |----------|----------------|-------------|
 | `disable_multipath` | `false` | If set to `true`, disables and stops the multipathd service during bootstrap to prevent multipath device management on the node. |
+| `additional_packages` | `""` | Comma-separated package names to install in addition to the bootstrap packages. |
+| `additional_kernel_modules` | `""` | Comma-separated kernel modules to load now and on boot in addition to the Kubernetes modules. |
 
 ### General Cluster Parameters
 
@@ -138,7 +140,7 @@ In a standard HA cluster, the control plane can be made highly available by embe
 | `control_plane_endpoint_port` | `6443`          | Kubernetes API server port.                 |
 | `skip_kube_proxy`             | `false`         | Flag to skip the installation of kube-proxy.|
 | `pod_subnet`                  | `10.32.0.0/16`  | CIDR for Kubernetes pod network.            |
-| `service_subnet`              | `10.96.0.0/12`  | CIDR for Kubernetes service network.        |
+| `service_subnet`              | `10.33.0.0/16`  | CIDR for Kubernetes service network.        |
 
 ### Runtime & Networking Components
 

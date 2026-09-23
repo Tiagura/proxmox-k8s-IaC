@@ -1,29 +1,30 @@
+- name: Define list of kernel modules
+  ansible.builtin.set_fact:
+    kernel_modules:
+      - overlay
+      - br_netfilter
+      - xt_socket
+      - ip_tables
+      - iptable_nat
+      - iptable_mangle
+      - iptable_raw
+      - iptable_filter
+      - "{{ additional_kernel_modules }}"
+
+- name: Flatten kernel module list
+  ansible.builtin.set_fact:
+    kernel_modules: "{{ kernel_modules | flatten }}"
+
 - name: Ensure all necessary modules are loaded
   ansible.builtin.modprobe:
     name: "{{ item }}"
     state: present
-  loop:
-    - overlay
-    - br_netfilter
-    - xt_socket
-    - ip_tables
-    - iptable_nat
-    - iptable_mangle
-    - iptable_raw
-    - iptable_filter
+  loop: "{{ kernel_modules }}"
   become: true
 
 - name: Ensure all modules load on boot
   ansible.builtin.copy:
     dest: /etc/modules-load.d/k8s.conf
-    content: |
-      overlay
-      br_netfilter
-      xt_socket
-      ip_tables
-      iptable_nat
-      iptable_mangle
-      iptable_raw
-      iptable_filter
+    content: "{{ kernel_modules | join('\n') }}\n"
     mode: '0644'
   become: true
